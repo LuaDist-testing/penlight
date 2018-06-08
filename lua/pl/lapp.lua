@@ -6,7 +6,7 @@
 --      Does some calculations
 --        -o,--offset (default 0.0)  Offset to add to scaled number
 --        -s,--scale  (number)  Scaling factor
---         <number>; (number )  Number to be scaled
+--        <number> (number) Number to be scaled
 --      ]]
 --
 --      print(args.offset + args.scale * args.number)
@@ -313,8 +313,8 @@ function lapp.process_options_string(str,args)
                     ps.converter = converter
                 end
                 ps.constraint = types[vtype].constraint
-            elseif not builtin_types[vtype] then
-                lapp.error(vtype.." is unknown type")
+            elseif not builtin_types[vtype] and vtype then
+                lapp.error(vtype.." is unknown type")          
             end
             parms[optparm] = ps
         end
