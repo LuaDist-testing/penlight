@@ -1,10 +1,9 @@
---- OrderedMap, a pl.Map which preserves ordering.
--- @class module
--- @name pl.OrderedMap
-
---[[
-module ('pl.OrderedMap')
-]]
+--- OrderedMap, a map which preserves ordering.
+--
+-- Derived from `pl.Map`.
+--
+-- Dependencies: `pl.utils`, `pl.tablex`, `pl.List`
+-- @module pl.OrderedMap
 
 local tablex = require 'pl.tablex'
 local utils = require 'pl.utils'

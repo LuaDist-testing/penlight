@@ -1,8 +1,9 @@
 --- Pretty-printing Lua tables.
 -- Also provides a sandboxed Lua table reader and
 -- a function to present large numbers in human-friendly format.
--- @class module
--- @name pl.pretty
+--
+-- Dependencies: `pl.utils`, `pl.lexer`
+-- @module pl.pretty
 
 local append = table.insert
 local concat = table.concat
@@ -15,12 +16,19 @@ local pretty = {}
 --- read a string representation of a Lua table.
 -- Uses load(), but tries to be cautious about loading arbitrary code!
 -- It is expecting a string of the form '{...}', with perhaps some whitespace
--- before or after the curly braces. An empty environment is used, and
+-- before or after the curly braces. A comment may occur beforehand.
+-- An empty environment is used, and
 -- any occurance of the keyword 'function' will be considered a problem.
+-- If `plain` is set, then the string is 'free form' Lua statements, evaluated
+-- in the given environment - the return value may be `nil`.
 -- @param s {string} string of the form '{...}', with perhaps some whitespace
 --		before or after the curly braces.
+-- @return a table
 function pretty.read(s)
     assert_arg(1,s,'string')
+    if s:find '^%s*%-%-' then -- may start with a comment..
+        s = s:gsub('%-%-.-\n','')
+    end
     if not s:find '^%s*%b{}%s*$' then return nil,"not a Lua table" end
     if s:find '[^\'"%w_]function[^\'"%w_]' then
         local tok = lexer.lua(s)
@@ -30,9 +38,23 @@ function pretty.read(s)
             end
         end
     end
-    local chunk,err = utils.load('return '..s,'tbl','t',{})
+    s = 'return '..s
+    local chunk,err = utils.load(s,'tbl','t',env or {})
     if not chunk then return nil,err end
     return chunk()
+end
+
+-- read a Lua chunk.
+-- @param s Lua code
+-- @param env optional environment
+-- @return the environment
+function pretty.load (s, env)
+    env = env or {}
+    local chunk,err = utils.load(s,'tbl','t',env)
+    if not chunk then return nil,err end
+    local ok,err = pcall(chunk)
+    if not ok then return nil,err end
+    return env
 end
 
 local function quote_if_necessary (v)
@@ -53,7 +75,7 @@ local keywords
 --  you want output on one line.
 --	@param tbl {table} Table to serialize to a string.
 --	@param space {string} (optional) The indent to use.
---		Defaults to two spaces.
+--		Defaults to two spaces; make it the empty string for no indentation
 --	@param not_clever {bool} (optional) Use for plain output, e.g {['key']=1}.
 --		Defaults to false.
 --  @return a string

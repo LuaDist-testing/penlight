@@ -1,6 +1,8 @@
---- Manipulating sequences as iterators.
--- @class module
--- @name pl.seq
+--- Manipulating iterators as sequences.
+-- See @{07-functional.md.Sequences|The Guide}
+--
+-- Dependencies: `pl.utils`, `debug`
+-- @module pl.seq
 
 local next,assert,type,pairs,tonumber,type,setmetatable,getmetatable,_G = next,assert,type,pairs,tonumber,type,setmetatable,getmetatable,_G
 local strfind = string.find
@@ -15,10 +17,6 @@ local _List = utils.stdmt.List
 local _Map = utils.stdmt.Map
 local assert_arg = utils.assert_arg
 require 'debug'
-
---[[
-module("pl.seq",utils._module)
-]]
 
 local seq = {}
 
@@ -110,6 +108,7 @@ end
 -- @param iter a sequence
 -- @param condn a predicate function (must return either true or false)
 -- @param optional argument to be passed to predicate as second argument.
+-- @return count
 function seq.count(iter,condn,arg)
   local i = 0
   seq.foreach(iter,function(val)
@@ -120,6 +119,8 @@ end
 
 --- return the minimum and the maximum value of the sequence.
 -- @param iter a sequence
+-- @return minimum value
+-- @return maximum value
 function seq.minmax(iter)
   local vmin,vmax = 1e70,-1e70
   for v in default_iter(iter) do
@@ -267,9 +268,11 @@ function seq.unique(iter,returns_table)
   end
 end
 
--- print out a sequence @iter, with a separator @sep (default space)
--- and maximum number of values per line @nfields (default 7)
--- @fmt is an optional format function to create a representation of each value.
+--- print out a sequence iter with a separator.
+-- @param iter a sequence
+-- @param sep the separator (default space)
+-- @param nfields maximum number of values per line (default 7)
+-- @param fmt optional format function for each value
 function seq.printall(iter,sep,nfields,fmt)
   local write = io.write
   if not sep then sep = ' ' end
@@ -450,8 +453,8 @@ end
 -- @param iter a sequence with up to 3 values
 -- @param fn a function
 function seq.foreach(iter,fn)
-  fn = function_arg(2,fn)
-  for i1,i2,i3 in default_iter(iter) do fn(i1,i2,i3) end
+    fn = function_arg(2,fn)
+    for i1,i2,i3 in default_iter(iter) do fn(i1,i2,i3) end
 end
 
 ---------------------- Sequence Adapters ---------------------

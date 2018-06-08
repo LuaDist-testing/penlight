@@ -1,22 +1,21 @@
---- Python-style list class. <p>
--- Based on original code by Nick Trout.
--- <p>
--- <b>Please Note</b>: methods that change the list will return the list.
--- This is to allow for method chaining, but please note that <tt>ls = ls:sort()</tt>
+--- Python-style list class.
+--
+-- **Please Note**: methods that change the list will return the list.
+-- This is to allow for method chaining, but please note that `ls = ls:sort()`
 -- does not mean that a new copy of the list is made. In-place (mutable) methods
 -- are marked as returning 'the list' in this documentation.
--- <p>
--- See the Guide for further <a href="../../index.html#list">discussion</a>
--- <p>
+--
+-- See the Guide for further @{02-arrays.md.Python_style_Lists|discussion}
+--
 -- See <a href="http://www.python.org/doc/current/tut/tut.html">http://www.python.org/doc/current/tut/tut.html</a>, section 5.1
--- <p>
--- <b>Note</b>: The comments before some of the functions are from the Python docs
+--
+-- **Note**: The comments before some of the functions are from the Python docs
 -- and contain Python code.
--- <p>
--- Written for Lua version 4.0 <br />
--- Redone for Lua 5.1, Steve Donovan.
--- @class module
--- @name pl.List
+--
+-- Written for Lua version Nick Trout 4.0; Redone for Lua 5.1, Steve Donovan.
+--
+-- Dependencies: `pl.utils`, `pl.tablex`
+-- @module pl.List
 -- @pragma nostrip
 
 local tinsert,tremove,concat,tsort = table.insert,table.remove,table.concat,table.sort
@@ -211,19 +210,27 @@ end
 -- @param x A data value
 -- @return number of times x appears
 function List:count(x)
-  local cnt=0
-  for i=1,#self do
-    if self[i]==x then cnt=cnt+1 end
-  end
-  return cnt
+    local cnt=0
+    for i=1,#self do
+        if self[i]==x then cnt=cnt+1 end
+    end
+    return cnt
 end
 
 --- Sort the items of the list, in place.
--- @param cmp an optional comparison function; '<' is used if not given.
+-- @param cmp an optional comparison function, default '<'
 -- @return the list
 function List:sort(cmp)
-  tsort(self,cmp)
-  return self
+    if cmp then cmp = function_arg(1,cmp) end
+    tsort(self,cmp)
+    return self
+end
+
+--- return a sorted copy of this list.
+-- @param cmp an optional comparison function, default '<'
+-- @return a new list
+function List:sorted(cmp)
+    return List(self):sort(cmp)
 end
 
 --- Reverse the elements of the list, in place.
@@ -237,6 +244,19 @@ function List:reverse()
         t[i],t[k] = t[k],t[i]
     end
     return self
+end
+
+--- return the minimum and the maximum value of the list.
+-- @return minimum value
+-- @return maximum value
+function List:minmax()
+    local vmin,vmax = 1e70,-1e70
+    for i = 1,#self do
+        local v = self[i]
+        if v < vmin then vmin = v end
+        if v > vmax then vmax = v end
+    end
+    return vmin,vmax
 end
 
 --- Emulate list slicing.  like  'list[first:last]' in Python.
@@ -253,8 +273,8 @@ end
 --- empty the list.
 -- @return the list
 function List:clear()
-  for i=1,#self do tremove(self,i) end
-  return self
+    for i=1,#self do tremove(self,i) end
+    return self
 end
 
 local eps = 1.0e-10
@@ -404,14 +424,32 @@ function List.__call(t,v,i)
 end
 --]]
 
+local MethodIter = {}
+
+function MethodIter:__index (name)
+    return function(mm,...)
+        return self.list:foreachm(name,...)
+    end
+end
+
 --- call the function for each element of the list.
 -- @param fun a function or callable object
 -- @param ... optional values to pass to function
 function List:foreach (fun,...)
-    local t = self
+    if fun==nil then
+        return setmetatable({list=self},MethodIter)
+    end
     fun = function_arg(1,fun)
-    for i = 1,#t do
-        fun(t[i],...)
+    for i = 1,#self do
+        fun(self[i],...)
+    end
+end
+
+function List:foreachm (name,...)
+    for i = 1,#self do
+        local obj = self[i]
+        local f = assert(obj[name],"method not found on object")
+        f(obj,...)
     end
 end
 
@@ -433,13 +471,28 @@ function List.split (s,delim)
     return makelist(split(s,delim))
 end
 
+local MethodMapper = {}
+
+function MethodMapper:__index (name)
+    return function(mm,...)
+        return self.list:mapm(name,...)
+    end
+end
+
 --- apply a function to all elements.
--- Any extra arguments will be passed to the function
+-- Any extra arguments will be passed to the function; if the function
+-- is `nil` then `map` returns a mapper object that maps over a method
+-- of the items
 -- @param fun a function of at least one argument
 -- @param ... arbitrary extra arguments.
 -- @return a new list: {f(x) for x in self}
+-- @usage List{'one','two'}:map(string.upper) == {'ONE','TWO'}
+-- @usage List{'one','two'}:map():sub(1,2) == {'on','tw'}
 -- @see pl.tablex.imap
 function List:map (fun,...)
+    if fun==nil then
+        return setmetatable({list=self},MethodMapper)
+    end
     return makelist(imap(fun,self,...),self)
 end
 

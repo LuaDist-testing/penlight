@@ -1,7 +1,6 @@
 --- Generally useful routines.
--- See  <a href="../../index.html#utils">the Guide</a>.
--- @class module
--- @name pl.utils
+-- See  @{01-introduction.md.Generally_useful_functions|the Guide}.
+-- @module pl.utils
 local format,gsub,byte = string.format,string.gsub,string.byte
 local clock = os.clock
 local stdout = io.stdout
@@ -11,7 +10,7 @@ local collisions = {}
 
 local utils = {}
 
-utils._VERSION = "0.9.4"
+utils._VERSION = "0.9.8"
 
 utils.dir_separator = _G.package.config:sub(1,1)
 
@@ -263,7 +262,7 @@ end
 if not lua52 then
     function table.pack (...)
         local n = select('#',...)
-        return {n=n; ...},n
+        return {n=n; ...}
     end
     local sep = package.config:sub(1,1)
     function package.searchpath (mod,path)
@@ -388,6 +387,7 @@ end
 -- @return a function
 -- @usage string_lambda '|x|x+1' (2) == 3
 -- @usage string_lambda '_+1 (2) == 3
+-- @function utils.string_lambda
 utils.string_lambda = utils.memoize(_string_lambda)
 
 local ops
@@ -444,6 +444,17 @@ function utils.bind1 (fn,p)
     fn = utils.function_arg(1,fn)
     return function(...) return fn(p,...) end
 end
+
+--- bind the second argument of the function to a value.
+-- @param fn a function of at least two values (may be an operator string)
+-- @param p a value
+-- @return a function such that f(x) is fn(x,p)
+-- @raise same as @{function_arg}
+function utils.bind2 (fn,p)
+    fn = utils.function_arg(1,fn)
+    return function(x,...) return fn(x,p,...) end
+end
+
 
 --- assert that the given argument is in fact of the correct type.
 -- @param n argument index

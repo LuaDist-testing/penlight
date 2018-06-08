@@ -1,25 +1,49 @@
 --- Operations on two-dimensional arrays.
--- @class module
--- @name pl.array2d
+-- See @{02-arrays.md.Operations_on_two_dimensional_tables|The Guide}
+--
+-- Dependencies: `pl.utils`, `pl.tablex`
+-- @module pl.array2d
 
 local require, type,tonumber,assert,tostring,io,ipairs,string,table =
  _G.require, _G.type,_G.tonumber,_G.assert,_G.tostring,_G.io,_G.ipairs,_G.string,_G.table
-local ops = require 'pl.operator'
+local setmetatable,getmetatable = setmetatable,getmetatable
+
 local tablex = require 'pl.tablex'
 local utils = require 'pl.utils'
 
 local imap,tmap,reduce,keys,tmap2,tset,index_by = tablex.imap,tablex.map,tablex.reduce,tablex.keys,tablex.map2,tablex.set,tablex.index_by
 local remove = table.remove
-local perm = require 'pl.permute'
 local splitv,fprintf,assert_arg = utils.splitv,utils.fprintf,utils.assert_arg
 local byte = string.byte
 local stdout = io.stdout
 
---[[
-module ('pl.array2d',utils._module)
-]]
-
 local array2d = {}
+
+local function obj (int,out)
+    local mt = getmetatable(int)
+    if mt then
+        setmetatable(out,mt)
+    end
+    return out
+end
+
+local function makelist (res)
+    return setmetatable(res,utils.stdmt.List)
+end
+
+
+local function index (t,k)
+    return t[k]
+end
+
+--- return the row and column size.
+-- @param t a 2d array
+-- @return number of rows
+-- @return number of cols
+function array2d.size (t)
+    assert_arg(1,t,'table')
+    return #t,#t[1]
+end
 
 --- extract a column from the 2D array.
 -- @param a 2d array
@@ -27,7 +51,7 @@ local array2d = {}
 -- @return 1d array
 function array2d.column (a,key)
     assert_arg(1,a,'table')
-    return imap(ops.index,a,key)
+    return makelist(imap(index,a,key))
 end
 local column = array2d.column
 
@@ -39,7 +63,7 @@ local column = array2d.column
 function array2d.map (f,a,arg)
     assert_arg(1,a,'table')
     f = utils.function_arg(1,f)
-    return imap(function(row) return imap(f,row,arg) end, a)
+    return obj(a,imap(function(row) return imap(f,row,arg) end, a))
 end
 
 --- reduce the rows using a function.
@@ -51,8 +75,6 @@ function array2d.reduce_rows (f,a)
     assert_arg(1,a,'table')
     return tmap(function(row) return reduce(f,row) end, a)
 end
-
-
 
 --- reduce the columns using a function.
 -- @param f a binary function
@@ -140,7 +162,40 @@ function array2d.flatten (t)
             k = k + 1
         end
     end
-    return res
+    return makelist(res)
+end
+
+--- reshape a 2D array.
+-- @param t 2d array
+-- @param nrows new number of rows
+-- @param co column-order (Fortran-style) (default false)
+-- @return a new 2d array
+function array2d.reshape (t,nrows,co)
+    local nr,nc = array2d.size(t)
+    local ncols = nr*nc / nrows
+    local res = {}
+    local ir,ic = 1,1
+    for i = 1,nrows do
+        local row = {}
+        for j = 1,ncols do
+            row[j] = t[ir][ic]
+            if not co then
+                ic = ic + 1
+                if ic > nc then
+                    ir = ir + 1
+                    ic = 1
+                end
+            else
+                ir = ir + 1
+                if ir > nr then
+                    ic = ic + 1
+                    ir = 1
+                end
+            end
+        end
+        res[i] = row
+    end
+    return obj(t,res)
 end
 
 --- swap two rows of an array.
@@ -168,7 +223,7 @@ end
 -- @param t 2d array
 -- @param ridx a table of row indices
 function array2d.extract_rows (t,ridx)
-    return index_by(t,ridx)
+    return obj(t,index_by(t,ridx))
 end
 
 --- extract the specified columns.
@@ -176,9 +231,11 @@ end
 -- @param cidx a table of column indices
 function array2d.extract_cols (t,cidx)
     assert_arg(1,t,'table')
+    local res = {}
     for i = 1,#t do
-        t[i] = index_by(t[i],cidx)
+        res[i] = index_by(t[i],cidx)
     end
+    return obj(t,res)
 end
 
 --- remove a row from an array.
@@ -251,9 +308,11 @@ function array2d.range (t,rstr)
 end
 
 local function default_range (t,i1,j1,i2,j2)
-    assert(t and type(t)=='table','not a table')
+    local nr, nc = array2d.size(t)
     i1,j1 = i1 or 1, j1 or 1
-    i2,j2 = i2 or #t, j2 or #t[1]
+    i2,j2 = i2 or nr, j2 or nc
+    if i2 < 0 then i2 = nr + i2 + 1 end
+    if j2 < 0 then j2 = nc + j2 + 1 end
     return i1,j1,i2,j2
 end
 
@@ -283,20 +342,21 @@ function array2d.slice (t,i1,j1,i2,j2)
         res[#res+1] = val
     end
     if i1 == i2 then res = res[1] end
-    return res
+    return obj(t,res)
 end
 
 --- set a specified range of an array to a value.
 -- @param t a 2D array
--- @param value the value
+-- @param value the value (may be a function)
 -- @param i1 start row (default 1)
 -- @param j1 start col (default 1)
 -- @param i2 end row   (default N)
 -- @param j2 end col   (default M)
+-- @see tablex.set
 function array2d.set (t,value,i1,j1,i2,j2)
     i1,j1,i2,j2 = default_range(t,i1,j1,i2,j2)
     for i = i1,i2 do
-        tset(t[i],value)
+        tset(t[i],value,j1,j2)
     end
 end
 
@@ -343,6 +403,33 @@ function array2d.forall (t,row_op,end_row_op,i1,j1,i2,j2)
     end
 end
 
+local min, max = math.min, math.max
+
+---- move a block from the destination to the source.
+-- @param dest a 2D array
+-- @param di start row in dest
+-- @param dj start col in dest
+-- @param src a 2D array
+-- @param i1 start row (default 1)
+-- @param j1 start col (default 1)
+-- @param i2 end row   (default N)
+-- @param j2 end col   (default M)
+function array2d.move (dest,di,dj,src,i1,j1,i2,j2)
+    assert_arg(1,dest,'table')
+    assert_arg(4,src,'table')
+    i1,j1,i2,j2 = default_range(src,i1,j1,i2,j2)
+    local nr,nc = array2d.size(dest)
+    i2, j2 = min(nr,i2), min(nc,j2)
+    --i1, j1 = max(1,i1), max(1,j1)
+    dj = dj - 1
+    for i = i1,i2 do
+        local drow, srow = dest[i+di-1], src[i]
+        for j = j1,j2 do
+            drow[j+dj] = srow[j]
+        end
+    end
+end
+
 --- iterate over all elements in a 2D array, with optional indices.
 -- @param a 2D array
 -- @param indices with indices (default false)
@@ -375,6 +462,9 @@ function array2d.iter (a,indices,i1,j1,i2,j2)
     end
 end
 
+--- iterate over all columns.
+-- @param a a 2D array
+-- @return each column in turn
 function array2d.columns (a)
     assert_arg(1,a,'table')
     local n = a[1][1]
@@ -384,6 +474,26 @@ function array2d.columns (a)
         if i > n then return nil end
         return column(a,i)
     end
+end
+
+--- new array of specified dimensions
+-- @param rows number of rows
+-- @param cols number of cols
+-- @param val initial value; if it's a function then use `val(i,j)`
+-- @return new 2d array
+function array2d.new(rows,cols,val)
+    local res = {}
+    local fun = utils.is_callable(val)
+    for i = 1,rows do
+        local row = {}
+        if fun then
+            for j = 1,cols do row[j] = val(i,j) end
+        else
+            for j = 1,cols do row[j] = val end
+        end
+        res[i] = row
+    end
+    return res
 end
 
 return array2d

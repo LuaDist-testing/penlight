@@ -1,19 +1,32 @@
 --- XML LOM Utilities.
--- This implements some useful things on LOM documents, such as returned by lxp.lom.parse.
+--
+-- This implements some useful things on [LOM](http://matthewwild.co.uk/projects/luaexpat/lom.html) documents, such as returned by `lxp.lom.parse`.
 -- In particular, it can convert LOM back into XML text, with optional pretty-printing control.
--- It's based on stanza.lua from Prosody http://hg.prosody.im/trunk/file/4621c92d2368/util/stanza.lua)
+-- It is s based on stanza.lua from [Prosody](http://hg.prosody.im/trunk/file/4621c92d2368/util/stanza.lua)
+--
+--     > d = xml.parse "<nodes><node id='1'>alice</node></nodes>"
+--     > = d
+--     <nodes><node id='1'>alice</node></nodes>
+--     > = xml.tostring(d,'','  ')
+--     <nodes>
+--        <node id='1'>alice</node>
+--     </nodes>
 --
 -- Can be used as a lightweight one-stop-shop for simple XML processing; a simple XML parser is included
--- but the default is to use lxp.lom if it can be found.
+-- but the default is to use `lxp.lom` if it can be found.
 -- <pre>
 -- Prosody IM
 -- Copyright (C) 2008-2010 Matthew Wild
--- Copyright (C) 2008-2010 Waqas Hussain
---
+-- Copyright (C) 2008-2010 Waqas Hussain--
 -- classic Lua XML parser by Roberto Ierusalimschy.
 -- modified to output LOM format.
 -- http://lua-users.org/wiki/LuaXml
 -- </pre>
+-- See @{06-data.md.XML|the Guide}
+--
+-- Dependencies: `pl.utils`
+--
+-- Soft Dependencies: `lxp.lom` (fallback is to use basic Lua parser)
 -- @module pl.xml
 
 local t_insert      =  table.insert;

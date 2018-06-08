@@ -1,7 +1,9 @@
---- Path manipulation and file queries. <br>
--- This is modelled after Python's os.path library (11.1)
--- @class module
--- @name pl.path
+--- Path manipulation and file queries.
+--
+-- This is modelled after Python's os.path library (10.1); see @{04-paths.md|the Guide}.
+--
+-- Dependencies: `pl.utils`, `lfs`
+-- @module pl.path
 
 -- imports and locals
 local _G = _G
@@ -22,7 +24,7 @@ module ('pl.path',utils._module)
 
 local path, attrib
 
-if _G.luajava then
+if rawget(_G,'luajava') then
     path = require 'pl.platf.luajava'
 else
     path = {}
@@ -151,18 +153,19 @@ end
 
 --- return an absolute path.
 -- @param P A file path
-function path.abspath(P)
+-- @param pwd optional start path to use (default is current dir)
+function path.abspath(P,pwd)
     assert_string(1,P)
-    if not currentdir then return P end
+    local use_pwd = pwd ~= nil
+    if not use_pwd and not currentdir then return P end
     P = P:gsub('[\\/]$','')
-    local pwd = currentdir()
+    pwd = pwd or currentdir()
     if not path.isabs(P) then
-        return path.join(pwd,P)
-    elseif path.is_windows and at(P,2) ~= ':' and at(P,2) ~= '\\' then
-        return pwd:sub(1,2)..P
-    else
-        return P
+        P = path.join(pwd,P)
+    elseif path.is_windows and not use_pwd and at(P,2) ~= ':' and at(P,2) ~= '\\' then
+        P = pwd:sub(1,2)..P -- attach current drive to path like '\\fred.txt'
     end
+    return path.normpath(P)
 end
 
 --- given a path, return the root part and the extension part.
@@ -262,6 +265,38 @@ function path.normpath (P)
     end
 end
 
+local function ATS (P)
+    if at(P,#P) ~= path.sep then
+        P = P..path.sep
+    end
+    return path.normcase(P)
+end
+
+--- relative path from current directory or optional start point
+-- @param P a path
+-- @param start optional start point (default current directory)
+function path.relpath (P,start)
+    local split,normcase,min,append = utils.split, path.normcase, math.min, table.insert
+    P = normcase(path.abspath(P,start))
+    start = start or currentdir()
+    start = normcase(start)
+    local startl, Pl = split(start,sep), split(P,sep)
+    local n = min(#startl,#Pl)
+    local k = n+1 -- default value if this loop doesn't bail out!
+    for i = 1,n do
+        if startl[i] ~= Pl[i] then
+            k = i
+            break
+        end
+    end
+    local rell = {}
+    for i = 1, #startl-k+1 do rell[i] = '..' end
+    if k <= #Pl then
+        for i = k,#Pl do append(rell,Pl[i]) end
+    end
+    return table.concat(rell,sep)
+end
+
 
 --- Replace a starting '~' with the user's home directory.
 -- In windows, if HOME isn't set, then USERPROFILE is used in preference to
@@ -295,6 +330,7 @@ end
 function path.common_prefix (path1,path2)
     assert_string(1,path1)
     assert_string(2,path2)
+    path1, path2 = path.normcase(path1), path.normcase(path2)
     -- get them in order!
     if #path1 > #path2 then path2,path1 = path1,path2 end
     for i = 1,#path1 do
