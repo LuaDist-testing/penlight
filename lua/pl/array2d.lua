@@ -2,10 +2,12 @@
 -- @class module
 -- @name pl.array2d
 
+local require, type,tonumber,assert,tostring,io,ipairs,string,table =
+ _G.require, _G.type,_G.tonumber,_G.assert,_G.tostring,_G.io,_G.ipairs,_G.string,_G.table
 local ops = require 'pl.operator'
 local tablex = require 'pl.tablex'
 local utils = require 'pl.utils'
-local type,tonumber,assert,tostring = type,tonumber,assert,tostring
+
 local imap,tmap,reduce,keys,tmap2,tset,index_by = tablex.imap,tablex.map,tablex.reduce,tablex.keys,tablex.map2,tablex.set,tablex.index_by
 local remove = table.remove
 local perm = require 'pl.permute'
@@ -67,8 +69,8 @@ end
 -- @param opr operation to reduce the rows
 -- @param a 2D array
 function array2d.reduce2 (opc,opr,a)
-    assert_arg(1,a,'table')
-    local tmp = reduce_rows(opr,a)
+    assert_arg(3,a,'table')
+    local tmp = array2d.reduce_rows(opr,a)
     return reduce(opc,tmp)
 end
 
@@ -112,10 +114,33 @@ end
 -- @param t1 a 1d table
 -- @param t2 a 1d table
 -- @return 2d table
+-- @usage product('..',{1,2},{'a','b'}) == {{'1a','2a'},{'1b','2b'}}
 function array2d.product (f,t1,t2)
-    assert_arg(1,t1,'table')
-    assert_arg(2,t2,'table')
-    return map2(f,1,2,t1,perm.table(t2))
+    f = utils.function_arg(1,f)
+    assert_arg(2,t1,'table')
+    assert_arg(3,t2,'table')
+    local res, map = {}, tablex.map
+    for i,v in ipairs(t2) do
+        res[i] = map(f,t1,v)
+    end
+    return res
+end
+
+--- flatten a 2D array.
+-- (this goes over columns first.)
+-- @param t 2d table
+-- @return a 1d table
+-- @usage flatten {{1,2},{3,4},{5,6}} == {1,2,3,4,5,6}
+function array2d.flatten (t)
+    local res = {}
+    local k = 1
+    for _,a in ipairs(t) do -- for all rows
+        for i = 1,#a do
+            res[k] = a[i]
+            k = k + 1
+        end
+    end
+    return res
 end
 
 --- swap two rows of an array.
@@ -129,8 +154,8 @@ end
 
 --- swap two columns of an array.
 -- @param t a 2d array
--- @param i1 a column index
--- @param i2 a column index
+-- @param j1 a column index
+-- @param j2 a column index
 function array2d.swap_cols (t,j1,j2)
     assert_arg(1,t,'table')
     for i = 1,#t do
@@ -140,14 +165,14 @@ function array2d.swap_cols (t,j1,j2)
 end
 
 --- extract the specified rows.
--- @param a 2d array
+-- @param t 2d array
 -- @param ridx a table of row indices
 function array2d.extract_rows (t,ridx)
     return index_by(t,ridx)
 end
 
 --- extract the specified columns.
--- @param a 2d array
+-- @param t 2d array
 -- @param cidx a table of column indices
 function array2d.extract_cols (t,cidx)
     assert_arg(1,t,'table')
@@ -217,9 +242,9 @@ end
 -- @see array2d.slice
 function array2d.range (t,rstr)
     assert_arg(1,t,'table')
-    local i1,j1,i2,j2 = parse_range(rstr)
+    local i1,j1,i2,j2 = array2d.parse_range(rstr)
     if i2 then
-        return slice(t,i1,j1,i2,j2)
+        return array2d.slice(t,i1,j1,i2,j2)
     else -- single value
         return t[i1][j1]
     end
@@ -238,7 +263,7 @@ end
 -- @param i1 start row (default 1)
 -- @param j1 start col (default 1)
 -- @param i2 end row   (default N)
--- @param j1 end col   (default M)
+-- @param j2 end col   (default M)
 -- @return an array, 2D in general but 1D in special cases.
 function array2d.slice (t,i1,j1,i2,j2)
     assert_arg(1,t,'table')
@@ -267,7 +292,7 @@ end
 -- @param i1 start row (default 1)
 -- @param j1 start col (default 1)
 -- @param i2 end row   (default N)
--- @param j1 end col   (default M)
+-- @param j2 end col   (default M)
 function array2d.set (t,value,i1,j1,i2,j2)
     i1,j1,i2,j2 = default_range(t,i1,j1,i2,j2)
     for i = i1,i2 do
@@ -282,7 +307,7 @@ end
 -- @param i1 start row (default 1)
 -- @param j1 start col (default 1)
 -- @param i2 end row   (default N)
--- @param j1 end col   (default M)
+-- @param j2 end col   (default M)
 function array2d.write (t,f,fmt,i1,j1,i2,j2)
     assert_arg(1,t,'table')
     f = f or stdout
@@ -295,17 +320,17 @@ function array2d.write (t,f,fmt,i1,j1,i2,j2)
     local function newline()
         f:write '\n'
     end
-    forall(t,rowop,newline,i1,j1,i2,j2)
+    array2d.forall(t,rowop,newline,i1,j1,i2,j2)
 end
 
 --- perform an operation for all values in a 2D array.
--- @param a 2D array
+-- @param t 2D array
 -- @param row_op function to call on each value
 -- @param end_row_op function to call at end of each row
 -- @param i1 start row (default 1)
 -- @param j1 start col (default 1)
 -- @param i2 end row   (default N)
--- @param j1 end col   (default M)
+-- @param j2 end col   (default M)
 function array2d.forall (t,row_op,end_row_op,i1,j1,i2,j2)
     assert_arg(1,t,'table')
     i1,j1,i2,j2 = default_range(t,i1,j1,i2,j2)
@@ -324,7 +349,7 @@ end
 -- @param i1 start row (default 1)
 -- @param j1 start col (default 1)
 -- @param i2 end row   (default N)
--- @param j1 end col   (default M)
+-- @param j2 end col   (default M)
 -- @return either value or i,j,value depending on indices
 function array2d.iter (a,indices,i1,j1,i2,j2)
     assert_arg(1,a,'table')

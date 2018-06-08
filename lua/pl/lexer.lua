@@ -44,9 +44,9 @@ local NUMBER4 = '^%d+%.?%d*[eE][%+%-]?%d+'
 local NUMBER5 = '^%d+%.?%d*'
 local IDEN = '^[%a_][%w_]*'
 local WSPACE = '^%s+'
-local STRING1 = "^'.-[^\\]'"
-local STRING2 = '^".-[^\\]"'
-local STRING3 = '^[\'"][\'"]'
+local STRING1 = [[^'.-[^\\]']]
+local STRING2 = [[^".-[^\\]"]]
+local STRING3 = "^((['\"])%2)" -- empty string
 local PREPRO = '^#.-[^\\]\n'
 
 local plain_matches,lua_matches,cpp_matches,lua_keyword,cpp_keyword
@@ -151,7 +151,7 @@ function lexer.scan (s,matches,filter,options)
         end
         matches = plain_matches
     end
-    function lex ()
+    local function lex ()
         local i1,i2,idx,res1,res2,tok,pat,fun,capt
         local line = 1
         if file then s = file:read()..'\n' end
@@ -301,14 +301,15 @@ function lexer.lua(s,filter,options)
             {STRING3,sdump},
             {STRING1,sdump},
             {STRING2,sdump},
+            {'^%-%-%[%[.-%]%]',cdump},
             {'^%-%-.-\n',cdump},
-            {'^%[%[.+%]%]',sdump_l},
-            {'^%-%-%[%[.+%]%]',cdump},
+            {'^%[%[.-%]%]',sdump_l},
             {'^==',tdump},
             {'^~=',tdump},
             {'^<=',tdump},
             {'^>=',tdump},
             {'^%.%.%.',tdump},
+            {'^%.%.',tdump},
             {'^.',tdump}
         }
     end
@@ -350,7 +351,7 @@ function lexer.cpp(s,filter,options)
             {STRING3,sdump},
             {STRING1,chdump},
             {STRING2,sdump},
-            {'^//.-\n',cdump_line},
+            {'^//.-\n',cdump},
             {'^/%*.-%*/',cdump},
             {'^==',tdump},
             {'^!=',tdump},

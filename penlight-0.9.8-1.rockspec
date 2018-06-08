@@ -1,17 +1,17 @@
 -- This file was automatically generated for the LuaDist project.
 
 package = "penlight"
-version = "0.9.5-1"
+version = "0.9.8-1"
 
 -- LuaDist source
 source = {
-  tag = "0.9.5-1",
+  tag = "0.9.8-1",
   url = "git://github.com/LuaDist-testing/penlight.git"
 }
 -- Original source
 -- source = {
---   dir = "Penlight",
---   url = "http://stevedonovan.github.com/files/penlight-0.9.5.zip",
+--   dir = "penlight-0.9.8",
+--   url = "http://stevedonovan.github.com/files/penlight-0.9.8-core.zip",
 -- }
 
 description = {
@@ -67,6 +67,7 @@ build = {
     ["pl.MultiMap"] = "lua/pl/MultiMap.lua",
     ["pl.OrderedMap"] = "lua/pl/OrderedMap.lua",
     ["pl.Set"] = "lua/pl/Set.lua",
+    ["pl.xml"] = "lua/pl/xml.lua",
     ["pl.platf.luajava"] = "lua/pl/platf/luajava.lua"
   },
 }

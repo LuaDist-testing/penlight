@@ -92,7 +92,7 @@ local function default_iter(iter)
   else return iter end
 end
 
-iter = default_iter
+seq.iter = default_iter
 
 --- create an iterator over a numerical range. Like the standard Python function xrange.
 -- @param start a number
@@ -160,6 +160,9 @@ end
 
 --- create a table of pairs from the double-valued sequence.
 -- @param iter a double-valued sequence
+-- @param i1 used to capture extra iterator values
+-- @param i2 as with pairs & ipairs
+-- @usage copy2(ipairs{10,20,30}) == {{1,10},{2,20},{3,30}}
 -- @return a list-like table
 function seq.copy2 (iter,i1,i2)
     local res = {}
@@ -213,7 +216,7 @@ end
 -- @param iter a sequence
 -- @param comp an optional comparison function (comp(x,y) is true if x < y)
 function seq.sort(iter,comp)
-    local t = copy(iter)
+    local t = seq.copy(iter)
     tsort(t,comp)
     return list(t)
 end
@@ -253,7 +256,7 @@ end
 -- @param returns_table true if we return a table, not a sequence
 -- @return a sequence or a table; defaults to a sequence.
 function seq.unique(iter,returns_table)
-  local t = count_map(iter)
+  local t = seq.count_map(iter)
   local res = {}
   for k in pairs(t) do tappend(res,k) end
   table.sort(res)
@@ -316,8 +319,8 @@ end
 -- by a function. If you don't supply an argument, then the function will
 -- receive both values of a double-valued sequence, otherwise behaves rather like
 -- tablex.map.
--- @param iter a sequence of one or two values
 -- @param fn a function to apply to elements; may take two arguments
+-- @param iter a sequence of one or two values
 -- @param arg optional argument to pass to function.
 function seq.map(fn,iter,arg)
     fn = function_arg(1,fn)
@@ -352,19 +355,22 @@ function seq.filter (iter,pred,arg)
 end
 
 --- 'reduce' a sequence using a binary function.
--- @param seq a sequence
 -- @param fun a function of two arguments
+-- @param iter a sequence
+-- @param oldval optional initial value
 -- @usage seq.reduce(operator.add,seq.list{1,2,3,4}) == 10
-function seq.reduce (fun,seq,oldval)
-    if not oldval then
-        seq = default_iter(seq)
-        oldval = seq()
-        fun = function_arg(1,fun)
-    end
-    local val = seq()
-    if val==nil then return oldval
-    else return fun(oldval,seq.reduce(fun,seq,val))
-    end
+-- @usage seq.reduce('-',{1,2,3,4,5}) == -13
+function seq.reduce (fun,iter,oldval)
+   fun = function_arg(1,fun)
+   iter = default_iter(iter)
+   if not oldval then
+       oldval = iter()
+   end
+   local val = oldval
+   for v in iter do
+       val = fun(val,v)
+   end
+   return val
 end
 
 --- take the first n values from the sequence.

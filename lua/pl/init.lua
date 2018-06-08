@@ -11,15 +11,15 @@ local modules = {
     input=true,seq=true,lexer=true,stringx=true,
     config=true,pretty=true,data=true,func=true,text=true,
     operator=true,lapp=true,array2d=true,
-    comprehension=true,
+    comprehension=true,xml=true,
     test = true, app = true, file = true, class = true, List = true,
     Map = true, Set = true, OrderedMap = true, MultiMap = true,
     Date = true,
     -- classes --
 }
-utils = require 'pl.utils'
+_G.utils = require 'pl.utils'
 
-for name,klass in pairs(utils.stdmt) do
+for name,klass in pairs(_G.utils.stdmt) do
     klass.__index = function(t,key)
         return require ('pl.'..name)[key]
     end;
@@ -44,4 +44,4 @@ setmetatable(_G,{
     end
 })
 
-if PENLIGHT_STRICT then require 'pl.strict' end
+if _G.PENLIGHT_STRICT then require 'pl.strict' end

@@ -42,16 +42,20 @@ end
 -- (cf. fnmatch.fnmatch in Python, 11.8)
 -- @param file A file name
 -- @param pattern A shell pattern
+-- @return true or false
+-- @raise file and pattern must be strings
 function dir.fnmatch(file,pattern)
     assert_string(1,file)
     assert_string(2,pattern)
     return path.normcase(file):find(filemask(pattern)) ~= nil
 end
 
---- return a list of all files in a list of files which match the pattern.
+--- return a list of all files which match the pattern.
 -- (cf. fnmatch.filter in Python, 11.8)
 -- @param files A table containing file names
 -- @param pattern A shell pattern.
+-- @return list of files
+-- @raise file and pattern must be strings
 function dir.filter(files,pattern)
     assert_arg(1,files,'table')
     assert_string(2,pattern)
@@ -81,6 +85,8 @@ end
 --- return a list of all files in a directory which match the a shell pattern.
 -- @param dir A directory. If not given, all files in current directory are returned.
 -- @param mask  A shell pattern. If  not given, all files are returned.
+-- @return lsit of files
+-- @raise dir and mask must be strings
 function dir.getfiles(dir,mask)
     assert_dir(1,dir)
     assert_string(2,mask)
@@ -96,6 +102,8 @@ end
 
 --- return a list of all subdirectories of the directory.
 -- @param dir A directory
+-- @return a list of directories
+-- @raise dir must be a string
 function dir.getdirectories(dir)
     assert_dir(1,dir)
     return _listfiles(dir,false)
@@ -111,13 +119,12 @@ local function quote_argument (f)
 end
 
 
-local res,alien,no_alien,kernel,CopyFile,MoveFile,GetLastError,win32_errors,cmd_tmpfile
+local alien,ffi,ffi_checked,CopyFile,MoveFile,GetLastError,win32_errors,cmd_tmpfile
 
 local function execute_command(cmd,parms)
    if not cmd_tmpfile then cmd_tmpfile = path.tmpname () end
    local err = path.is_windows and ' > ' or ' 2> '
     cmd = cmd..' '..parms..err..cmd_tmpfile
-    --print(cmd)
     local ret = utils.execute(cmd)
     if not ret then
         return false,(utils.readfile(cmd_tmpfile):gsub('\n(.*)',''))
@@ -126,45 +133,62 @@ local function execute_command(cmd,parms)
     end
 end
 
-local function find_alien_copyfile ()
-    if not alien and not no_alien then
+local function find_ffi_copyfile ()
+    if not ffi_checked then
+        ffi_checked = true
+        local res
         res,alien = pcall(require,'alien')
-        no_alien = not res
-        if no_alien then alien = nil end
-        if alien then
-            -- register the Win32 CopyFile and MoveFile functions
-            local copySpec = {'string','string','int',ret='int',abi='stdcall'}
-            kernel = alien.load('kernel32.dll')
-            CopyFile = kernel.CopyFileA
-            CopyFile:types(copySpec)
-            local moveSpec = {'string','string',ret='int',abi='stdcall'}
-            MoveFile = kernel.MoveFileA
-            MoveFile:types(moveSpec)
-            GetLastError = kernel.GetLastError
-            GetLastError:types{ret ='int', abi='stdcall'}
-            win32_errors = {
-                ERROR_FILE_NOT_FOUND    =         2,
-                ERROR_PATH_NOT_FOUND    =         3,
-                ERROR_ACCESS_DENIED    =          5,
-                ERROR_WRITE_PROTECT    =          19,
-                ERROR_BAD_UNIT         =          20,
-                ERROR_NOT_READY        =          21,
-                ERROR_WRITE_FAULT      =          29,
-                ERROR_READ_FAULT       =          30,
-                ERROR_SHARING_VIOLATION =         32,
-                ERROR_LOCK_VIOLATION    =         33,
-                ERROR_HANDLE_DISK_FULL  =         39,
-                ERROR_BAD_NETPATH       =         53,
-                ERROR_NETWORK_BUSY      =         54,
-                ERROR_DEV_NOT_EXIST     =         55,
-                ERROR_FILE_EXISTS       =         80,
-                ERROR_OPEN_FAILED       =         110,
-                ERROR_INVALID_NAME      =         123,
-                ERROR_BAD_PATHNAME      =         161,
-                ERROR_ALREADY_EXISTS    =         183,
-            }
+        if not res then
+            alien = nil
+            res, ffi = pcall(require,'ffi')
         end
+        if not res then
+            ffi = nil
+            return
+        end
+    else
+        return
     end
+    if alien then
+        -- register the Win32 CopyFile and MoveFile functions
+        local kernel = alien.load('kernel32.dll')
+        CopyFile = kernel.CopyFileA
+        CopyFile:types{'string','string','int',ret='int',abi='stdcall'}
+        MoveFile = kernel.MoveFileA
+        MoveFile:types{'string','string',ret='int',abi='stdcall'}
+        GetLastError = kernel.GetLastError
+        GetLastError:types{ret ='int', abi='stdcall'}
+    elseif ffi then
+        ffi.cdef [[
+            int CopyFileA(const char *src, const char *dest, int iovr);
+            int MoveFileA(const char *src, const char *dest);
+            int GetLastError();
+        ]]
+        CopyFile = ffi.C.CopyFileA
+        MoveFile = ffi.C.MoveFileA
+        GetLastError = ffi.C.GetLastError
+    end
+    win32_errors = {
+        ERROR_FILE_NOT_FOUND    =         2,
+        ERROR_PATH_NOT_FOUND    =         3,
+        ERROR_ACCESS_DENIED    =          5,
+        ERROR_WRITE_PROTECT    =          19,
+        ERROR_BAD_UNIT         =          20,
+        ERROR_NOT_READY        =          21,
+        ERROR_WRITE_FAULT      =          29,
+        ERROR_READ_FAULT       =          30,
+        ERROR_SHARING_VIOLATION =         32,
+        ERROR_LOCK_VIOLATION    =         33,
+        ERROR_HANDLE_DISK_FULL  =         39,
+        ERROR_BAD_NETPATH       =         53,
+        ERROR_NETWORK_BUSY      =         54,
+        ERROR_DEV_NOT_EXIST     =         55,
+        ERROR_FILE_EXISTS       =         80,
+        ERROR_OPEN_FAILED       =         110,
+        ERROR_INVALID_NAME      =         123,
+        ERROR_BAD_PATHNAME      =         161,
+        ERROR_ALREADY_EXISTS    =         183,
+    }
 end
 
 local function two_arguments (f1,f2)
@@ -176,8 +200,8 @@ local function file_op (is_copy,src,dest,flag)
         return false,"cannot overwrite destination"
     end
     if is_windows then
-        -- if we haven't tried to load Alien before, then do so
-        find_alien_copyfile()
+        -- if we haven't tried to load Alien/LuaJIT FFI before, then do so
+        find_ffi_copyfile()
         -- fallback if there's no Alien, just use DOS commands *shudder*
         -- 'rename' involves a copy and then deleting the source.
         if not CopyFile then
@@ -216,6 +240,7 @@ end
 -- @param dest destination file or directory
 -- @param flag true if you want to force the copy (default)
 -- @return true if operation succeeded
+-- @raise src and dest must be strings
 function dir.copyfile (src,dest,flag)
     assert_string(1,src)
     assert_string(2,dest)
@@ -227,6 +252,7 @@ end
 -- @param src source file
 -- @param dest destination file or directory
 -- @return true if operation succeeded
+-- @raise src and dest must be strings
 function dir.movefile (src,dest)
     assert_string(1,src)
     assert_string(2,dest)
@@ -271,6 +297,8 @@ end
 -- @param root A starting directory
 -- @param bottom_up False if we start listing entries immediately.
 -- @param follow_links follow symbolic links
+-- @return an iterator returning root,dirs,files
+-- @raise root must be a string
 function dir.walk(root,bottom_up,follow_links)
     assert_string(1,root)
     if not path.isdir(root) then return raise 'not a directory' end
@@ -285,6 +313,9 @@ end
 
 --- remove a whole directory tree.
 -- @param fullpath A directory path
+-- @return true or nil
+-- @return error if failed
+-- @raise fullpath must be a string
 function dir.rmtree(fullpath)
     assert_string(1,fullpath)
     if not path.isdir(fullpath) then return raise 'not a directory' end
@@ -323,6 +354,8 @@ end
 --- create a directory path.
 -- This will create subdirectories as necessary!
 -- @param p A directory path
+-- @return a valid created path
+-- @raise p must be a string
 function dir.makepath (p)
     assert_string(1,p)
     return _makepath(path.normcase(path.abspath(p)))
@@ -336,8 +369,10 @@ end
 -- @param file_fun an optional function to apply on all files
 -- @param verbose an optional boolean to control the verbosity of the output.
 --  It can also be a logging function that behaves like print()
--- @return if failed, false plus an error message. If completed the traverse,
---  true, a list of failed directory creations and a list of failed file operations.
+-- @return true, or nil
+-- @return error message, or list of failed directory creations
+-- @return list of failed file operations
+-- @raise path1 and path2 must be strings
 -- @usage clonetree('.','../backup',copyfile)
 function dir.clonetree (path1,path2,file_fun,verbose)
     assert_string(1,path1)
@@ -386,6 +421,7 @@ end
 --- return an iterator over all entries in a directory tree
 -- @param d a directory
 -- @return an iterator giving pathname and mode (true for dir, false otherwise)
+-- @raise d must be a non-empty string
 function dir.dirtree( d )
     assert( d and d ~= "", "directory parameter is missing or empty" )
     local exists, isdir = path.exists, path.isdir
@@ -420,6 +456,7 @@ end
 --	@param start_path {string} A directory. If not given, all files in current directory are returned.
 --	@param pattern {string} A shell pattern. If not given, all files are returned.
 --	@return Table containing all the files found recursively starting at <i>path</i> and filtered by <i>pattern</i>.
+--  @raise start_path must be a string
 function dir.getallfiles( start_path, pattern )
     assert( type( start_path ) == "string", "bad argument #1 to 'GetAllFiles' (Expected string but recieved " .. type( start_path ) .. ")" )
     pattern = pattern or ""

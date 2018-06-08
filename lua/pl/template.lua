@@ -24,6 +24,7 @@
     module('pl.template')
 ]]
 
+local utils = require 'pl.utils'
 local append,format = table.insert,string.format
 
 local function parseHashLines(chunk,brackets,esc)
@@ -71,17 +72,19 @@ local template = {}
 -- </ul>
 function template.substitute(str,env)
     env = env or {}
-    if env._parent then
+    if rawget(env,"_parent") then
         setmetatable(env,{__index = env._parent})
     end
-    local code = parseHashLines(str,env._brackets or '()',env._escape or '#')
-    local fn,err = load(code,'TMP','t',env)
+    local brackets = rawget(env,"_brackets") or '()'
+    local escape = rawget(env,"_escape") or '#'
+    local code = parseHashLines(str,brackets,escape)
+    local fn,err = utils.load(code,'TMP','t',env)
     if not fn then return nil,err end
     fn = fn()
     local out = {}
-    local res,err = pcall(fn,function(s)
+    local res,err = xpcall(function() fn(function(s)
         out[#out+1] = s
-    end)
+    end) end,debug.traceback)
     if not res then
         if env._debug then print(code) end
         return nil,err

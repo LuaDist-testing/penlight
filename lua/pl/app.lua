@@ -3,28 +3,37 @@
 -- @class module
 -- @name pl.app
 
+local io,package,require = _G.io, _G.package, _G.require
 local utils = require 'pl.utils'
 local path = require 'pl.path'
 local lfs = require 'lfs'
 
+
 local app = {}
 
 local function check_script_name ()
-    if _G.arg == nil then utils.error('no command line args available\nWas this run from a main script?') end
+    if _G.arg == nil then error('no command line args available\nWas this run from a main script?') end
     return _G.arg[0]
 end
 
 --- add the current script's path to the Lua module path.
 -- Applies to both the source and the binary module paths. It makes it easy for
 -- the main file of a multi-file program to access its modules in the same directory.
+-- `base` allows these modules to be put in a specified subdirectory, to allow for
+-- cleaner deployment and resolve potential conflicts between a script name and its
+-- library directory.
+-- @param base optional base directory.
 -- @return the current script's path with a trailing slash
-function app.require_here ()
+function app.require_here (base)
     local p = path.dirname(check_script_name())
     if not path.isabs(p) then
         p = path.join(lfs.currentdir(),p)
     end
     if p:sub(-1,-1) ~= path.sep then
         p = p..path.sep
+    end
+    if base then
+        p = p..base..path.sep
     end
     local so_ext = path.is_windows and 'dll' or 'so'
     local lsep = package.path:find '^;' and '' or ';'
@@ -38,7 +47,8 @@ end
 -- These will look like '~/.SNAME/file', with '~' as with expanduser and
 -- SNAME is the name of the script without .lua extension.
 -- @param file a filename (w/out path)
--- @return a full pathname
+-- @return a full pathname, or nil
+-- @return 'cannot create' error
 function app.appfile (file)
     local sname = path.basename(check_script_name())
     local name,ext = path.splitext(sname)
@@ -73,10 +83,11 @@ end
 -- @param flags_with_values any flags that take values, e.g. <code>{out=true}</code>
 -- @return a table of flags (flag=value pairs)
 -- @return an array of parameters
+-- @raise if args is nil, then the global `args` must be available!
 function app.parse_args (args,flags_with_values)
     if not args then
         args = _G.arg
-        if not args then utils.error "Not in a main program: 'arg' not found" end
+        if not args then error "Not in a main program: 'arg' not found" end
     end
     flags_with_values = flags_with_values or {}
     local _args = {}

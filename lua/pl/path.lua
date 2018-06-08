@@ -20,9 +20,9 @@ local assert_arg,assert_string,raise = utils.assert_arg,utils.assert_string,util
 module ('pl.path',utils._module)
 ]]
 
-local path
+local path, attrib
 
-if luajava then
+if _G.luajava then
     path = require 'pl.platf.luajava'
 else
     path = {}
@@ -150,11 +150,11 @@ function path.splitpath(P)
 end
 
 --- return an absolute path.
--- @param PP A A file path
+-- @param P A file path
 function path.abspath(P)
     assert_string(1,P)
     if not currentdir then return P end
-    P = P:gsub('[\//]$','')
+    P = P:gsub('[\\/]$','')
     local pwd = currentdir()
     if not path.isabs(P) then
         return path.join(pwd,P)
@@ -206,7 +206,7 @@ end
 -- @param P A file path
 function path.extension(P)
     assert_string(1,P)
-    p1,p2 = path.splitext(P)
+    local p1,p2 = path.splitext(P)
     return p2
 end
 
@@ -312,16 +312,6 @@ function path.common_prefix (path1,path2)
     --return ''
 end
 
-if not package.searchpath then
-    function package.searchpath (mod,path)
-        mod = mod:gsub('%.',sep)
-        for m in path:gmatch('[^;]+') do
-            local nm = m:gsub('?',mod)
-            local f = io.open(nm,'r')
-            if f then f:close(); return nm end
-        end
-    end
-end
 
 --- return the full path where a particular Lua module would be found.
 -- Both package.path and package.cpath is searched, so the result may
@@ -339,6 +329,7 @@ function path.package_path(mod)
     if res then return res,false end
     return raise 'cannot find module on path'
 end
+
 
 ---- finis -----
 return path

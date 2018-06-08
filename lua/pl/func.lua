@@ -60,8 +60,8 @@ local function CPH (idx)
     return P {op='X',repr='_C'..idx, index=idx}
 end
 
-_1,_2,_3,_4,_5 = PH(1),PH(2),PH(3),PH(4),PH(5)
-_0 = P{op='X',repr='...',index=0}
+func._1,func._2,func._3,func._4,func._5 = PH(1),PH(2),PH(3),PH(4),PH(5)
+func._0 = P{op='X',repr='...',index=0}
 
 function func.Var (name)
     local ls = utils.split(name,'[%s,]+')
@@ -78,7 +78,7 @@ end
 
 local repr
 
-Nil = func.Var 'nil'
+func.Nil = func.Var 'nil'
 
 function _PEMT.__index(obj,key)
     return P{op='[]',obj,key}
@@ -104,11 +104,6 @@ function func.Len (arg)
     return P{op='#',arg}
 end
 
-if LUA52 then
---~     function _PEMT.__len (arg)
---~         return P{op='#',arg}
---~     end
-end
 
 local function binreg(context,t)
     for name,op in pairs(t) do
@@ -146,7 +141,7 @@ end
 
 --- register a function for use in placeholder expressions.
 -- @param fun a function
--- @param an optional name
+-- @param name an optional name
 -- @return a placeholder functiond
 function func.register (fun,name)
     assert_arg(1,fun,'function')
@@ -202,7 +197,9 @@ end
 
 --- create a string representation of a placeholder expression.
 -- @param e a placeholder expression
+-- @param lastpred not used
 function repr (e,lastpred)
+    local tail = func.tail
     if isPE(e) then
         local pred = operators[e.op]
         local ls = map(repr,e,pred)
@@ -234,7 +231,7 @@ function repr (e,lastpred)
     elseif type(e) == 'string' then
         return '"'..e..'"'
     elseif type(e) == 'function' then
-        local name = lookup_imported_name(e)
+        local name = func.lookup_imported_name(e)
         if name then return name else return tostring(e) end
     else
         return tostring(e) --should not really get here!
@@ -282,7 +279,7 @@ func.collect_values = collect_values
 -- @return a function
 function func.instantiate (e)
     local consts,values,parms = {},{},{}
-    local rep
+    local rep, err, fun
     local n = func.collect_values(e,values)
     for i = 1,#values do
         append(consts,'_C'..i)
@@ -294,7 +291,7 @@ function func.instantiate (e)
     consts = concat(consts,',')
     parms = concat(parms,',')
     rep = repr(e)
-    fstr = ('return function(%s) return function(%s) return %s end end'):format(consts,parms,rep)
+    local fstr = ('return function(%s) return function(%s) return %s end end'):format(consts,parms,rep)
     if _DEBUG then print(fstr) end
     fun,err = loadstring(fstr,'fun')
     if not fun then return nil,err end
