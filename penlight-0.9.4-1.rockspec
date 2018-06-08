@@ -1,22 +1,22 @@
 -- This file was automatically generated for the LuaDist project.
 
 package = "penlight"
-version = "0.8-1"
+version = "0.9.4-1"
 
 -- LuaDist source
 source = {
-  tag = "0.8-1",
+  tag = "0.9.4-1",
   url = "git://github.com/LuaDist-testing/penlight.git"
 }
 -- Original source
 -- source = {
---   dir = "penlight-0.8",
---   url = "http://mysite.mweb.co.za/residents/sdonovan/lua/pl-0.8.zip",
+--   dir = "penlight-0.9.4",
+--   url = "http://stevedonovan.github.com/files/penlight-core-0.9.4.zip",
 -- }
 
 description = {
   summary = "Lua utility libraries loosely based on the Python standard libraries",
-  homepage = "http://penlight.luaforge.net",
+  homepage = "http://stevedonovan.github.com/Penlight",
   license = "MIT/X11",
   maintainer = "steve.j.donovan@gmail.com",
   detailed = [[
@@ -31,13 +31,12 @@ dependencies = {
 }
 
 build = {
+  type = "builtin",
   modules = {
     ["pl.strict"] = "lua/pl/strict.lua",
     ["pl.dir"] = "lua/pl/dir.lua",
-    ["pl.classx"] = "lua/pl/classx.lua",
     ["pl.operator"] = "lua/pl/operator.lua",
     ["pl.input"] = "lua/pl/input.lua",
-    ["pl.compat52"] = "lua/pl/compat52.lua",
     ["pl.config"] = "lua/pl/config.lua",
     ["pl.seq"] = "lua/pl/seq.lua",
     ["pl.stringio"] = "lua/pl/stringio.lua",
@@ -52,8 +51,9 @@ build = {
     ["pl.permute"] = "lua/pl/permute.lua",
     ["pl.pretty"] = "lua/pl/pretty.lua",
     ["pl.class"] = "lua/pl/class.lua",
-    ["pl.list"] = "lua/pl/list.lua",
+    ["pl.List"] = "lua/pl/List.lua",
     ["pl.data"] = "lua/pl/data.lua",
+    ["pl.Date"] = "lua/pl/Date.lua",
     ["pl"] = "lua/pl/init.lua",
     ["pl.luabalanced"] = "lua/pl/luabalanced.lua",
     ["pl.comprehension"] = "lua/pl/comprehension.lua",
@@ -62,11 +62,11 @@ build = {
     ["pl.func"] = "lua/pl/func.lua",
     ["pl.lapp"] = "lua/pl/lapp.lua",
     ["pl.file"] = "lua/pl/file.lua",
+    ['pl.template'] = "lua/pl/template.lua",
+    ["pl.Map"] = "lua/pl/Map.lua",
+    ["pl.MultiMap"] = "lua/pl/MultiMap.lua",
+    ["pl.OrderedMap"] = "lua/pl/OrderedMap.lua",
+    ["pl.Set"] = "lua/pl/Set.lua",
+    ["pl.platf.luajava"] = "lua/pl/platf/luajava.lua"
   },
-  type = "module",
-  copy_directories = {
-    "docs",
-    "tests",
-    "examples",
-  }
 }

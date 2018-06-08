@@ -1,19 +1,22 @@
---- Python-style list class.
--- Based on original code by Nick Trout. <br>
--- Please note: methods that change the list will return the list. <br>
--- This is to allow for method chaining, but please note that ls = ls:sort() <br>
--- does not mean that a new copy of the list is made. In-place (mutable) methods <br>
+--- Python-style list class. <p>
+-- Based on original code by Nick Trout.
+-- <p>
+-- <b>Please Note</b>: methods that change the list will return the list.
+-- This is to allow for method chaining, but please note that <tt>ls = ls:sort()</tt>
+-- does not mean that a new copy of the list is made. In-place (mutable) methods
 -- are marked as returning 'the list' in this documentation.
+-- <p>
 -- See the Guide for further <a href="../../index.html#list">discussion</a>
-
--- @class module
--- @name pl.list
-
--- See http://www.python.org/doc/current/tut/tut.html, section 5.1
--- Note:The comments before some of the functions are from the Python docs
+-- <p>
+-- See <a href="http://www.python.org/doc/current/tut/tut.html">http://www.python.org/doc/current/tut/tut.html</a>, section 5.1
+-- <p>
+-- <b>Note</b>: The comments before some of the functions are from the Python docs
 -- and contain Python code.
--- Written for Lua version 4.0
+-- <p>
+-- Written for Lua version 4.0 <br />
 -- Redone for Lua 5.1, Steve Donovan.
+-- @class module
+-- @name pl.List
 
 local tinsert,tremove,concat,tsort = table.insert,table.remove,table.concat,table.sort
 local setmetatable, getmetatable,type,tostring,assert,string,next = setmetatable,getmetatable,type,tostring,assert,string,next
@@ -29,14 +32,18 @@ local split = utils.split
 local assert_arg = utils.assert_arg
 local normalize_slice = tablex._normalize_slice
 
-module ('pl.list',utils._module)
+--[[
+module ('pl.List',utils._module)
+]]
 
 local Multimap = utils.stdmt.MultiMap
 -- metatable for our list objects
-List = utils.stdmt.List
+local List = utils.stdmt.List
 List.__index = List
 List._name = "List"
 List._class = List
+
+local iter
 
 -- we give the metatable its own metatable so that we can call it like a function!
 setmetatable(List,{
@@ -45,14 +52,12 @@ setmetatable(List,{
     end,
 })
 
-local _List = List
-
 local function makelist (t)
-    return setmetatable(t,_List)
+    return setmetatable(t,List)
 end
 
 local function is_list(t)
-    return getmetatable(t) == _List
+    return getmetatable(t) == List
 end
 
 local function simple_table(t)
@@ -61,8 +66,8 @@ end
 
 --- Create a new list. Can optionally pass a table;
 -- passing another instance of List will cause a copy to be created
--- we pass anything which isn't a simple table to iter() to work out
--- an appropriate iterator  @see iter
+-- we pass anything which isn't a simple table to iterate() to work out
+-- an appropriate iterator  @see iterate
 -- @param t An optional list-like table
 -- @return a new List
 -- @usage ls = List();  ls = List {1,2,3,4}
@@ -310,9 +315,11 @@ end
 -- This method uses tostring on all elements.
 -- @param delim a delimiter string, can be empty.
 -- @return a string
-function List:join (delim)
+function List:join (delim,v2s)
+    v2s = v2s or tostring
+    delim = delim or ''
     assert_arg(1,delim,'string')
-    return concat(imap(tostring,self),delim)
+    return concat(imap(v2s,self),delim)
 end
 
 --- join a list of strings. <br>
@@ -323,10 +330,18 @@ end
 -- @return a string
 List.concat = concat
 
+local function tostring_q(val)
+    local s = tostring(val)
+    if type(val) == 'string' then
+        s = '"'..s..'"'
+    end
+    return s
+end
+
 --- how our list should be rendered as a string. Uses join().
--- @see pl.list.List:join
+-- @see List:join
 function List:__tostring()
-    return '{'..self:join(',')..'}'
+    return '{'..self:join(',',tostring_q)..'}'
 end
 
 --[[
@@ -355,7 +370,7 @@ end
 -- @param fun a function or callable object
 function List:foreach (fun,...)
     local t = self
-    fun = function_arg(fun)
+    fun = function_arg(1,fun)
     for i = 1,#t do
         fun(t[i],...)
     end
@@ -440,9 +455,9 @@ end
 -- @param ... will also be passed to the function
 -- @return a table where the keys are the returned values, and the values are Lists
 -- of values where the function returned that key. It is given the type of Multimap.
--- @see pl.classx.MultiMap
+-- @see pl.MultiMap
 function List:partition (fun,...)
-    fun = function_arg(fun)
+    fun = function_arg(1,fun)
     local res = {}
     for i = 1,#self do
         local val = self[i]
@@ -463,9 +478,9 @@ end
 -- This captures the Python concept of 'sequence'.
 -- For tables, iterates over all values with integer indices.
 -- @param seq a sequence; a string (over characters), a table, a file object (over lines) or an iterator function
--- @usage for x in iter {1,10,22,55} do io.write(x,',') end ==> 1,10,22,55
--- @usage for ch in iter 'help' do do io.write(ch,' ') end ==> h e l p
-function iter(seq)
+-- @usage for x in iterate {1,10,22,55} do io.write(x,',') end ==> 1,10,22,55
+-- @usage for ch in iterate 'help' do do io.write(ch,' ') end ==> h e l p
+function List.iterate(seq)
     if type(seq) == 'string' then
         local idx = 0
         local n = #seq
@@ -493,5 +508,7 @@ function iter(seq)
         return seq:lines()
     end
 end
+iter = List.iterate
 
+return List
 

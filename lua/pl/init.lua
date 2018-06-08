@@ -1,24 +1,29 @@
--- entry point for loading all PL libraries only on demand!
+--------------
+-- entry point for loading all PL libraries only on demand.
+-- Requiring 'pl' means that whenever a module is accesssed (e.g. utils.split)
+-- then that module is dynamically loaded. The submodules are all brought into
+-- the global space.
+-- @class module
+-- @name pl
 
 local modules = {
     utils = true,path=true,dir=true,tablex=true,stringio=true,sip=true,
     input=true,seq=true,lexer=true,stringx=true,
     config=true,pretty=true,data=true,func=true,text=true,
     operator=true,lapp=true,array2d=true,
-    comprehension=true,luabalanced=true,
-    test = true, app = true, file = true,
+    comprehension=true,
+    test = true, app = true, file = true, class = true, List = true,
+    Map = true, Set = true, OrderedMap = true, MultiMap = true,
+    Date = true,
     -- classes --
-    List = 'list', Map = 'class', Set = 'class', class = 'class',
-    OrderedMap = 'classx', MultiMap = 'classx', TypedList = 'classx',
 }
 utils = require 'pl.utils'
 
 for name,klass in pairs(utils.stdmt) do
     klass.__index = function(t,key)
-        return require ('pl.'..modules[name])[name][key]
-    end
+        return require ('pl.'..name)[key]
+    end;
 end
-
 
 local _hook
 setmetatable(_G,{
@@ -27,19 +32,16 @@ setmetatable(_G,{
     end,
     __index = function(t,name)
         local found = modules[name]
-        local modname
+        -- either true, or the name of the module containing this class.
+        -- either way, we load the required module and make it globally available.
         if found then
-            if type(found) == 'string' then
-                return require('pl.'..found) [name]
-            else
-                rawset(_G,name,require('pl.'..name))
-                return _G[name]
-            end
+            -- e..g pretty.dump causes pl.pretty to become available as 'pretty'
+            rawset(_G,name,require('pl.'..name))
+            return _G[name]
         elseif _hook then
             return _hook(t,name)
         end
     end
 })
 
--- remove the comment if you want Penlight to always run in strict mode
-require 'pl.strict'
+if PENLIGHT_STRICT then require 'pl.strict' end

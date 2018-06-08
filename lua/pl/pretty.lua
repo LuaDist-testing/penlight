@@ -1,21 +1,27 @@
-----------------------------------------------------------
---- Pretty-printing Lua tables
+--- Pretty-printing Lua tables.
+-- @class module
+-- @name pl.pretty
 
 local append = table.insert
 local concat = table.concat
-local type,tostring,pairs,ipairs,loadstring,setfenv,require,print,select = type,tostring,pairs,ipairs,loadstring,setfenv,require,print,select
 local utils = require 'pl.utils'
 local lexer = require 'pl.lexer'
 local assert_arg = utils.assert_arg
 
+--[[
 module('pl.pretty',utils._module)
+]]
+
+local pretty = {}
 
 --- read a string representation of a Lua table.
 -- Uses loadstring, but tries to be cautious about loading arbitrary code!
 -- It is expecting a string of the form '{...}', with perhaps some whitespace
 -- before or after the curly braces. An empty environment is used, and
 -- any occurance of the keyword 'function' will be considered a problem.
-function read(s)
+-- @param s {string} string of the form '{...}', with perhaps some whitespace
+--		before or after the curly braces.
+function pretty.read(s)
     assert_arg(1,s,'string')
     if not s:find '^%s*%b{}%s*$' then return nil,"not a Lua table" end
     if s:find '[^\'"%w_]function[^\'"%w_]' then
@@ -26,9 +32,8 @@ function read(s)
             end
         end
     end
-    local chunk,err = loadstring('return '..s,'tbl')
+    local chunk,err = loadin({},'return '..s,'tbl')
     if not chunk then return nil,err end
-    setfenv(chunk,{})
     return chunk()
 end
 
@@ -43,12 +48,13 @@ end
 local keywords
 
 
---- create a string representation of a Lua table.
--- @param a table
--- @param space the indent to use (defaults to two spaces)
--- @param not_clever (defaults to false) use for plain output, e.g {['key']=1}
--- @return a string
-function write (tbl,space,not_clever)
+---	Create a string representation of a Lua table.
+--	@param tbl {table} Table to serialize to a string.
+--	@param space {string} (optional) The indent to use.
+--		Defaults to two spaces.
+--	@param not_clever {bool} (optional) Use for plain output, e.g {['key']=1}.
+--		Defaults to false.
+function pretty.write (tbl,space,not_clever)
     assert_arg(1,tbl,'table')
     if not keywords then
         keywords = lexer.get_keywords()
@@ -86,9 +92,9 @@ function write (tbl,space,not_clever)
         end
     end
 
-	local function quote (s)
-	    return ('%q'):format(tostring(s))
-	end
+    local function quote (s)
+        return ('%q'):format(tostring(s))
+    end
 
     local function index (numkey,key)
         if not numkey then key = quote(key) end
@@ -104,7 +110,7 @@ function write (tbl,space,not_clever)
             if t:find('\n') then
                 putln('[[\n'..t..']],')
             else
-                putln(quote(t)..', ')
+                putln(quote(t)..',')
             end
         elseif tp == 'table' then
             if tables[t] then
@@ -149,14 +155,17 @@ function write (tbl,space,not_clever)
     return concat(lines,#space > 0 and '\n' or '')
 end
 
---- dump a Lua table out to a file or stdout
--- @param t a table
--- @param file (optional) file name
-function dump (t,...)
+---	Dump a Lua table out to a file or stdout.
+--	@param t {table} The table to write to a file or stdout.
+--	@param ... {string} (optional) File name to write too. Defaults to writing
+--		to stdout.
+function pretty.dump (t,...)
     if select('#',...) == 0 then
-        print(write(t))
+        print(pretty.write(t))
         return true
     else
-        return utils.raise(utils.writefile((select(1,...)),t))
+        return utils.writefile((select(1,...)),pretty.write(t))
     end
 end
+
+return pretty

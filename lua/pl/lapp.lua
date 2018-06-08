@@ -1,55 +1,55 @@
--- lapp.lua
--- Simple command-line parsing using human-readable specification.
+--- Simple command-line parsing using human-readable specification.
+-- Supports GNU-style parameters.
+-- <pre class=example>
+--      lapp = require 'pl.lapp'
+--      local args = lapp [[
+--      Does some calculations
+--        -o,--offset (default 0.0)  Offset to add to scaled number
+--        -s,--scale  (number)  Scaling factor
+--         &lt;number&gt; (number )  Number to be scaled
+--      ]]
+--
+--      print(args.offset + args.scale * args.number)
+-- </pre>
+-- Lines begining with '-' are flags; there may be a short and a long name;
+-- lines begining wih '&lt;var&gt;' are arguments.  Anything in parens after
+-- the flag/argument is either a default, a type name or a range constraint.
+-- <p>See <a href="../../index.html#lapp">the Guide</a>
 -- @class module
 -- @name pl.lapp
------------------------------
---~ -- args.lua
---~ local args = require ('lapp') [[
---~ Testing parameter handling
---~     -p               Plain flag (defaults to false)
---~     -q,--quiet       Plain flag with GNU-style optional long name
---~     -o  (string)     Required string option
---~     -n  (number)     Required number option
---~     -s (default 1.0) Option that takes a number, but will default
---~     <start> (number) Required number argument
---~     <input> (default stdin)  A parameter which is an input file
---~     <output> (default stdout) One that is an output file
---~ ]]
---~ for k,v in pairs(args) do
---~     print(k,v)
---~ end
--------------------------------
---~ > args -pq -o help -n 2 2.3
---~ input   file (781C1B78)
---~ p       true
---~ s       1
---~ output  file (781C1B98)
---~ quiet   true
---~ start   2.3
---~ o       help
---~ n       2
---------------------------------
 
-local match = require 'pl.sip'.match_at_start
-local stringx = require 'pl.stringx'
-local lines,lstrip,strip,at = stringx.lines,stringx.lstrip,stringx.strip,stringx.at
-local isdigit = stringx.isdigit
-local append = table.insert
-local tinsert = table.insert
+local status,sip = pcall(require,'pl.sip')
+if not status then
+    sip = require 'sip'
+end
+local match = sip.match_at_start
+local append,tinsert = table.insert,table.insert
 
+--[[
+module('pl.lapp')
+]]
 
-pl.lapp = {}
-local lapp = pl.lapp
+local function lines(s) return s:gmatch('([^\n]*)\n') end
+local function lstrip(str)  return str:gsub('^%s+','')  end
+local function strip(str)  return lstrip(str):gsub('%s+$','') end
+local function at(s,k)  return s:sub(k,k) end
+local function isdigit(s) return s:find('^%d+$') == 1 end
 
+local lapp = {}
 
 local open_files,parms,aliases,parmlist,usage,windows,script
+
+lapp.callback = false -- keep Strict happy
 
 local filetypes = {
     stdin = {io.stdin,'file-in'}, stdout = {io.stdout,'file-out'},
     stderr = {io.stderr,'file-out'}
 }
 
-local function quit(msg,no_usage)
+--- quit this script immediately.
+-- @param msg optional message
+-- @param no_usage suppress 'usage' display
+function lapp.quit(msg,no_usage)
     if msg then
         io.stderr:write(msg..'\n\n')
     end
@@ -59,30 +59,40 @@ local function quit(msg,no_usage)
     os.exit(1);
 end
 
-local function error(msg,no_usage)
-    quit(script..':'..msg,no_usage)
+--- print an error to stderr and quit.
+-- @param msg a message
+-- @param no_usage suppress 'usage' display
+function lapp.error(msg,no_usage)
+    lapp.quit(script..':'..msg,no_usage)
 end
 
-local function open (file,opt)
+--- open a file.
+-- This will quit on error, and keep a list of file objects for later cleanup.
+-- @param file filename
+-- @param opt same as second parameter of <code>io.open</code>
+function lapp.open (file,opt)
     local val,err = io.open(file,opt)
-    if not val then error(err,true) end
+    if not val then lapp.error(err,true) end
     append(open_files,val)
     return val
 end
 
-local function xassert(condn,msg)
+--- quit if the condition is false.
+-- @param condn a condition
+-- @param msg an optional message
+function lapp.assert(condn,msg)
     if not condn then
-        error(msg)
+        lapp.error(msg)
     end
 end
 
 local function range_check(x,min,max,parm)
-    xassert(min <= x and max >= x,parm..' out of range')
+    lapp.assert(min <= x and max >= x,parm..' out of range')
 end
 
 local function xtonumber(s)
     local val = tonumber(s)
-    if not val then error("unable to convert to number: "..s) end
+    if not val then lapp.error("unable to convert to number: "..s) end
     return val
 end
 
@@ -99,7 +109,7 @@ local function convert_parameter(ps,val)
     if ps.type == 'number' then
         val = xtonumber(val)
     elseif is_filetype(ps.type) then
-        val = open(val,(ps.type == 'file-in' and 'r') or 'w' )
+        val = lapp.open(val,(ps.type == 'file-in' and 'r') or 'w' )
     elseif ps.type == 'boolean' then
         val = true
     end
@@ -109,40 +119,50 @@ local function convert_parameter(ps,val)
     return val
 end
 
+--- add a new type to Lapp. These appear in parens after the value like
+-- a range constraint, e.g. '<ival> (integer) Process PID'
+-- @param name name of type
+-- @param converter either a function to convert values, or a Lua type name.
+-- @param constraint optional function to verify values, should use lapp.error
+-- if failed.
 function lapp.add_type (name,converter,constraint)
     types[name] = {converter=converter,constraint=constraint}
 end
 
 local function force_short(short)
-    xassert(#short==1,short..": short parameters should be one character")
+    lapp.assert(#short==1,short..": short parameters should be one character")
 end
 
 local function process_default (sval)
-	local val = tonumber(sval)
-	if val then -- we have a number!
-		return val,'number'
-	elseif filetypes[sval] then
-		local ft = filetypes[sval]
-		return ft[1],ft[2]
-	else
-		return sval,'string'
-	end
+    local val = tonumber(sval)
+    if val then -- we have a number!
+        return val,'number'
+    elseif filetypes[sval] then
+        local ft = filetypes[sval]
+        return ft[1],ft[2]
+    else
+        if sval:match '^["\']' then sval = sval:sub(2,-2) end
+        return sval,'string'
+    end
 end
 
-function process_options_string(str)
+--- process a Lapp options string.
+-- Usually called as lapp().
+-- @param str the options text
+-- @return a table with parameter-value pairs
+function lapp.process_options_string(str)
     local results = {}
     local opts = {at_start=true}
     local varargs
-	open_files = {}
-	parms = {}
-	aliases = {}
-	parmlist = {}
-	types = {}
+    open_files = {}
+    parms = {}
+    aliases = {}
+    parmlist = {}
+    types = {}
 
     local function check_varargs(s)
-        local res,cnt = s:gsub('%.%.%.%s*','')
-        varargs = cnt > 0
-        return res
+        local res,cnt = s:gsub('^%.%.%.%s*','')
+        return res, (cnt > 0)
     end
 
     local function set_result(ps,parm,val)
@@ -158,48 +178,53 @@ function process_options_string(str)
     end
 
     usage = str
-    local res = {}
 
     for line in lines(str) do
+        local res = {}
         local optspec,optparm,i1,i2,defval,vtype,constraint
         line = lstrip(line)
+        local function check(str)
+            return match(str,line,res)
+        end
 
-		-- flags: either -<short> or -<short>,--<long>
-		if match('-$v{short},--$v{long} $',line,res) or match('-$v{short} $',line,res) then
-			if res.long then
-				optparm = res.long
-				aliases[res.short] = optparm
-			else
-				optparm = res.short
-			end
-			force_short(res.short)
-            res.rest = check_varargs(res.rest)
-        elseif match('$<{name} $',line,res) then -- is it <parameter_name>?
+        -- flags: either '-<short>', '-<short>,--<long>' or '--<long>'
+        if check '-$v{short}, --$v{long} $' or check '-$v{short} $' or check '--$v{long} $' then
+            if res.long then
+                optparm = res.long
+                if res.short then aliases[res.short] = optparm  end
+            else
+                optparm = res.short
+            end
+            if res.short then force_short(res.short) end
+            res.rest, varargs = check_varargs(res.rest)
+        elseif check '$<{name} $'  then -- is it <parameter_name>?
             -- so <input file...> becomes input_file ...
-            optparm = check_varargs(res.name):gsub('%A','_')
-			append(parmlist,optparm)
+            optparm,rest = res.name:match '([^%.]+)(.*)'
+            optparm = optparm:gsub('%A','_')
+            varargs = rest == '...'
+            append(parmlist,optparm)
         end
         if res.rest then -- this is not a pure doc line
             line = res.rest
-			res = {}
+            res = {}
             -- do we have (default <val>) or (<type>)?
-			if match('$({def} $',line,res) or match('$({def}',line,res) then
-				typespec = strip(res.def)
-				if match('default $',typespec,res) then
-					defval,vtype = process_default(res[1])
-				elseif match('$f{min}..$f{max}',typespec,res) then
-					local min,max = res.min,res.max
-					vtype = 'number'
-					constraint = function(x)
-						range_check(x,min,max,optparm)
-					end
-				else -- () just contains type of required parameter
-					vtype = typespec
-				end
-			else -- must be a plain flag, no extra parameter required
-				defval = false
-				vtype = 'boolean'
-			end
+            if match('$({def} $',line,res) or match('$({def}',line,res) then
+                local typespec = strip(res.def)
+                if match('default $',typespec,res) then
+                    defval,vtype = process_default(res[1])
+                elseif match('$f{min}..$f{max}',typespec,res) then
+                    local min,max = res.min,res.max
+                    vtype = 'number'
+                    constraint = function(x)
+                        range_check(x,min,max,optparm)
+                    end
+                else -- () just contains type of required parameter
+                    vtype = typespec
+                end
+            else -- must be a plain flag, no extra parameter required
+                defval = false
+                vtype = 'boolean'
+            end
             local ps = {
                 type = vtype,
                 defval = defval,
@@ -229,54 +254,56 @@ function process_options_string(str)
 
     while i <= #arg do
         local theArg = arg[i]
+        local res = {}
         -- look for a flag, -<short flags> or --<long flag>
-		if match('--$v{long}',theArg,res) or match('-$v{short}',theArg,res) then
-			if res.long then -- long option
-				parm = res.long
-			elseif #res.short == 1 then
-				parm = res.short
-			else
-				local parmstr = res.short
+        if match('--$v{long}',theArg,res) or match('-$v{short}',theArg,res) then
+            if res.long then -- long option
+                parm = res.long
+            elseif #res.short == 1 then
+                parm = res.short
+            else
+                local parmstr = res.short
                 parm = at(parmstr,1)
-				if isdigit(at(parmstr,2)) then
-					-- a short option followed by a digit is an exception (for AW;))
-					-- push ahead into the arg array
-					tinsert(arg,i+1,parmstr:sub(2))
-				else
-					-- push multiple flags into the arg array!
-					for k = 2,#parmstr do
-						tinsert(arg,i+k-1,'-'..at(parmstr,k))
-					end
-				end
-			end
-			if parm == 'h' or parm == 'help' then
-				quit()
-			end
-			if aliases[parm] then parm = aliases[parm] end
-		else -- a parameter
-			parm = parmlist[iparm]
-			if not parm then
-			   -- extra unnamed parameters are indexed starting at 1
-			   parm = iextra
-			   iextra = iextra + 1
-			   ps = { type = 'string' }
-			else
-				ps = parms[parm]
-			end
-			if not ps.varargs then
-				iparm = iparm + 1
-			end
-			val = theArg
-		end
-		ps = parms[parm]
-		if not ps then error("unrecognized parameter: "..parm) end
-		if ps.type ~= 'boolean' then -- we need a value! This should follow
+                if isdigit(at(parmstr,2)) then
+                    -- a short option followed by a digit is an exception (for AW;))
+                    -- push ahead into the arg array
+                    tinsert(arg,i+1,parmstr:sub(2))
+                else
+                    -- push multiple flags into the arg array!
+                    for k = 2,#parmstr do
+                        tinsert(arg,i+k-1,'-'..at(parmstr,k))
+                    end
+                end
+            end
+            if parm == 'h' or parm == 'help' then
+                lapp.quit()
+            end
+            if aliases[parm] then parm = aliases[parm] end
+        else -- a parameter
+            parm = parmlist[iparm]
+            if not parm then
+               -- extra unnamed parameters are indexed starting at 1
+               parm = iextra
+               ps = { type = 'string' }
+               parms[parm] = ps
+               iextra = iextra + 1
+            else
+                ps = parms[parm]
+            end
+            if not ps.varargs then
+                iparm = iparm + 1
+            end
+            val = theArg
+        end
+        ps = parms[parm]
+        if not ps then lapp.error("unrecognized parameter: "..parm) end
+        if ps.type ~= 'boolean' then -- we need a value! This should follow
             if not val then
                 i = i + 1
                 val = arg[i]
             end
-			xassert(val,parm.." was expecting a value")
-		end
+            lapp.assert(val,parm.." was expecting a value")
+        end
         ps.used = true
         val = convert_parameter(ps,val)
         set_result(ps,parm,val)
@@ -292,7 +319,7 @@ function process_options_string(str)
     -- check unused parms, set defaults and check if any required parameters were missed
     for parm,ps in pairs(parms) do
         if not ps.used then
-            if ps.required then error("missing required parameter: "..parm) end
+            if ps.required then lapp.error("missing required parameter: "..parm) end
             set_result(ps,parm,ps.defval)
         end
     end
@@ -307,13 +334,7 @@ end
 
 
 setmetatable(lapp, {
-    __call = function(tbl,str) return process_options_string(str) end,
-    __index = {
-        open = open,
-        quit = quit,
-        error = error,
-        assert = xassert,
-    }
+    __call = function(tbl,str) return lapp.process_options_string(str) end,
 })
 
 
