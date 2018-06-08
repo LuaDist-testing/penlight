@@ -1,4 +1,4 @@
---- path manipulation and file queries. <br>
+--- Path manipulation and file queries. <br>
 -- This is modelled after Python's os.path library (11.1)
 -- @class module
 -- @name pl.path
@@ -154,10 +154,11 @@ end
 function path.abspath(P)
     assert_string(1,P)
     if not currentdir then return P end
+    P = P:gsub('[\//]$','')
     local pwd = currentdir()
     if not path.isabs(P) then
         return path.join(pwd,P)
-    elseif path.is_windows and P:sub(2,2) ~= ':' then
+    elseif path.is_windows and at(P,2) ~= ':' and at(P,2) ~= '\\' then
         return pwd:sub(1,2)..P
     else
         return P
@@ -235,16 +236,29 @@ function path.join(p1,p2)
     return p1..p2
 end
 
---- Normalize the case of a pathname. On Unix, this returns the path unchanged;
+--- normalize the case of a pathname. On Unix, this returns the path unchanged;
 --  for Windows, it converts the path to lowercase, and it also converts forward slashes
--- to backward slashes. Will also replace '\dir\..\' by '\' (PL extension!)
+-- to backward slashes.
 -- @param P A file path
 function path.normcase(P)
     assert_string(1,P)
     if path.is_windows then
-        return (P:lower():gsub('/','\\'):gsub('\\[^\\]+\\%.%.',''))
+        return (P:lower():gsub('/','\\'))
     else
         return P
+    end
+end
+
+--- normalize a path name.
+--  A//B, A/./B and A/foo/../B all become A/B.
+-- @param P a file path
+function path.normpath (P)
+    assert_string(1,P)
+    if path.is_windows then
+        P = P:gsub('/','\\')
+        return (P:gsub('[^\\]+\\%.%.\\',''):gsub('\\%.?\\','\\'))
+    else
+        return (P:gsub('[^/]+/%.%./',''):gsub('/%.?/','/'))
     end
 end
 

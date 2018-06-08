@@ -1,0 +1,188 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html>
+<head>
+    <title>Penlight Documentation</title>
+    <link rel="stylesheet" href="../ldoc.css" type="text/css" />
+</head>
+<body>
+
+<div id="container">
+
+<div id="product">
+	<div id="product_logo"></div>
+	<div id="product_name"><big><b></b></big></div>
+	<div id="product_description"></div>
+</div> <!-- id="product" -->
+
+<div id="main">
+
+
+<!-- Menu -->
+
+
+<div id="navigation">
+<h1>Penlight</h1>
+<ul>
+  <li><a href="../index.html">Index</a></li>
+</ul>
+
+<h2>Contents</h2>
+<ul>
+<li><a href="#Functions">Functions</a></li>
+</ul>
+
+<h2>Modules</h2>
+<ul>
+  <li><a href="pl.html">pl</a></li>
+  <li><a href="pl.Date.html">pl.Date</a></li>
+  <li><a href="pl.List.html">pl.List</a></li>
+  <li><a href="pl.Map.html">pl.Map</a></li>
+  <li><a href="pl.MultiMap.html">pl.MultiMap</a></li>
+  <li><a href="pl.OrderedMap.html">pl.OrderedMap</a></li>
+  <li><a href="pl.Set.html">pl.Set</a></li>
+  <li><a href="pl.app.html">pl.app</a></li>
+  <li><a href="pl.array2d.html">pl.array2d</a></li>
+  <li><a href="pl.class.html">pl.class</a></li>
+  <li><a href="pl.comprehension.html">pl.comprehension</a></li>
+  <li><strong>pl.config</strong></li>
+  <li><a href="pl.data.html">pl.data</a></li>
+  <li><a href="pl.dir.html">pl.dir</a></li>
+  <li><a href="pl.file.html">pl.file</a></li>
+  <li><a href="pl.func.html">pl.func</a></li>
+  <li><a href="pl.input.html">pl.input</a></li>
+  <li><a href="pl.lapp.html">pl.lapp</a></li>
+  <li><a href="pl.lexer.html">pl.lexer</a></li>
+  <li><a href="pl.luabalanced.html">pl.luabalanced</a></li>
+  <li><a href="pl.operator.html">pl.operator</a></li>
+  <li><a href="pl.path.html">pl.path</a></li>
+  <li><a href="pl.permute.html">pl.permute</a></li>
+  <li><a href="pl.pretty.html">pl.pretty</a></li>
+  <li><a href="pl.seq.html">pl.seq</a></li>
+  <li><a href="pl.sip.html">pl.sip</a></li>
+  <li><a href="pl.strict.html">pl.strict</a></li>
+  <li><a href="pl.stringio.html">pl.stringio</a></li>
+  <li><a href="pl.stringx.html">pl.stringx</a></li>
+  <li><a href="pl.tablex.html">pl.tablex</a></li>
+  <li><a href="pl.template.html">pl.template</a></li>
+  <li><a href="pl.test.html">pl.test</a></li>
+  <li><a href="pl.text.html">pl.text</a></li>
+  <li><a href="pl.utils.html">pl.utils</a></li>
+</ul>
+
+</div>
+
+<div id="content">
+
+
+<h1>Module <code>pl.config</code></h1>
+
+
+<p>Reads configuration files into a Lua table.</p>
+<p><p>
+  Understands INI files, classic Unix config files, and simple
+ delimited columns of values. <p>
+ <pre class=example>
+    # test.config
+    # Read timeout in seconds
+    read.timeout=10
+    # Write timeout in seconds
+    write.timeout=5
+    #acceptable ports
+    ports = 1002,1003,1004
+
+        -- readconfig.lua
+    require 'pl'
+    local t = config.read 'test.config'
+    print(pretty.write(t))
+    
+    ### output #####
+   {
+      ports = {
+        1002,
+        1003,
+        1004
+      },
+      write_timeout = 5,
+      read_timeout = 10
+    }    
+ </pre>
+ See the Guide for further <a href="../../index.html#config">discussion</a></p>
+
+<h2><a href="#Functions">Functions</a></h2>
+<table class="function_list">
+	<tr>
+	<td class="name" nowrap><a href="#lines">lines&nbsp;(file)</a></td>
+	<td class="summary">like io.lines(), but allows for lines to be continued with '\'.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#read">read&nbsp;(file, cnfg)</a></td>
+	<td class="summary">read a configuration file into a table</td>
+	</tr>
+</table>
+
+<br/>
+<br/>
+
+    <h2><a name="Functions"></a>Functions</h2>
+    
+    <dl class="function">
+    <dt>
+    <a name = "lines"></a>
+    <strong>lines&nbsp;(file)</strong>
+    </dt>
+    <dd>
+    like io.lines(), but allows for lines to be continued with '\'.
+    
+
+    <h3>Parameters:</h3>
+    <ul>
+       <li><code><em>file</em></code>:  a file-like object (anything where read() returns the next line) or a filename.
+ Defaults to stardard input.</li>
+    </ul>
+
+
+    <h3>Returns:</h3>
+    <ol>
+        an iterator over the lines
+    </ol>
+
+</dd>
+    <dt>
+    <a name = "read"></a>
+    <strong>read&nbsp;(file, cnfg)</strong>
+    </dt>
+    <dd>
+    read a configuration file into a table
+    
+
+    <h3>Parameters:</h3>
+    <ul>
+       <li><code><em>file</em></code>:  either a file-like object or a string, which must be a filename</li>
+       <li><code><em>cnfg</em></code>:  a configuration table that may contain these fields:
+ <ul>
+ <li> variablilize make names into valid Lua identifiers (default true)</li>
+ <li> convert_numbers try to convert values into numbers (default true)</li>
+ <li> trim_space ensure that there is no starting or trailing whitespace with values (default true)</li>
+ <li> list_delim delimiter to use when separating columns (default ',')</li>
+ </ul></li>
+    </ul>
+
+
+    <h3>Returns:</h3>
+    <ol>
+        nil,error_msg in case of an error, otherwise a table containing items
+    </ol>
+
+</dd>
+</dl>
+
+
+</div> <!-- id="content" -->
+</div> <!-- id="main" -->
+<div id="about">
+</div> <!-- id="about" -->
+</div> <!-- id="container" -->
+</body>
+</html>
+

@@ -1,0 +1,251 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html>
+<head>
+    <title>Penlight Documentation</title>
+    <link rel="stylesheet" href="../ldoc.css" type="text/css" />
+</head>
+<body>
+
+<div id="container">
+
+<div id="product">
+	<div id="product_logo"></div>
+	<div id="product_name"><big><b></b></big></div>
+	<div id="product_description"></div>
+</div> <!-- id="product" -->
+
+<div id="main">
+
+
+<!-- Menu -->
+
+
+<div id="navigation">
+<h1>Penlight</h1>
+<ul>
+  <li><a href="../index.html">Index</a></li>
+</ul>
+
+<h2>Contents</h2>
+<ul>
+<li><a href="#Functions">Functions</a></li>
+</ul>
+
+<h2>Modules</h2>
+<ul>
+  <li><a href="pl.html">pl</a></li>
+  <li><a href="pl.Date.html">pl.Date</a></li>
+  <li><a href="pl.List.html">pl.List</a></li>
+  <li><a href="pl.Map.html">pl.Map</a></li>
+  <li><a href="pl.MultiMap.html">pl.MultiMap</a></li>
+  <li><a href="pl.OrderedMap.html">pl.OrderedMap</a></li>
+  <li><a href="pl.Set.html">pl.Set</a></li>
+  <li><a href="pl.app.html">pl.app</a></li>
+  <li><a href="pl.array2d.html">pl.array2d</a></li>
+  <li><a href="pl.class.html">pl.class</a></li>
+  <li><a href="pl.comprehension.html">pl.comprehension</a></li>
+  <li><a href="pl.config.html">pl.config</a></li>
+  <li><a href="pl.data.html">pl.data</a></li>
+  <li><a href="pl.dir.html">pl.dir</a></li>
+  <li><a href="pl.file.html">pl.file</a></li>
+  <li><a href="pl.func.html">pl.func</a></li>
+  <li><a href="pl.input.html">pl.input</a></li>
+  <li><strong>pl.lapp</strong></li>
+  <li><a href="pl.lexer.html">pl.lexer</a></li>
+  <li><a href="pl.luabalanced.html">pl.luabalanced</a></li>
+  <li><a href="pl.operator.html">pl.operator</a></li>
+  <li><a href="pl.path.html">pl.path</a></li>
+  <li><a href="pl.permute.html">pl.permute</a></li>
+  <li><a href="pl.pretty.html">pl.pretty</a></li>
+  <li><a href="pl.seq.html">pl.seq</a></li>
+  <li><a href="pl.sip.html">pl.sip</a></li>
+  <li><a href="pl.strict.html">pl.strict</a></li>
+  <li><a href="pl.stringio.html">pl.stringio</a></li>
+  <li><a href="pl.stringx.html">pl.stringx</a></li>
+  <li><a href="pl.tablex.html">pl.tablex</a></li>
+  <li><a href="pl.template.html">pl.template</a></li>
+  <li><a href="pl.test.html">pl.test</a></li>
+  <li><a href="pl.text.html">pl.text</a></li>
+  <li><a href="pl.utils.html">pl.utils</a></li>
+</ul>
+
+</div>
+
+<div id="content">
+
+
+<h1>Module <code>pl.lapp</code></h1>
+
+
+<p>Simple command-line parsing using human-readable specification.</p>
+<p>Supports GNU-style parameters.
+ <pre class=example>
+      lapp = require 'pl.lapp'
+      local args = lapp [[
+      Does some calculations
+        -o,--offset (default 0.0)  Offset to add to scaled number
+        -s,--scale  (number)  Scaling factor
+         &lt;number&gt; (number )  Number to be scaled
+      ]]
+
+      print(args.offset + args.scale * args.number)
+ </pre>
+ Lines begining with '-' are flags; there may be a short and a long name;
+ lines begining wih '&lt;var&gt;' are arguments.  Anything in parens after
+ the flag/argument is either a default, a type name or a range constraint.
+ <p>See <a href="../../index.html#lapp">the Guide</a></p>
+
+<h2><a href="#Functions">Functions</a></h2>
+<table class="function_list">
+	<tr>
+	<td class="name" nowrap><a href="#quit">quit&nbsp;(msg, no_usage)</a></td>
+	<td class="summary">quit this script immediately.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#error">error&nbsp;(msg, no_usage)</a></td>
+	<td class="summary">print an error to stderr and quit.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#open">open&nbsp;(file, opt)</a></td>
+	<td class="summary">open a file.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#assert">assert&nbsp;(condn, msg)</a></td>
+	<td class="summary">quit if the condition is false.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#add_type">add_type&nbsp;(name, converter, constraint)</a></td>
+	<td class="summary">add a new type to Lapp.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#process_options_string">process_options_string&nbsp;(str)</a></td>
+	<td class="summary">process a Lapp options string.</td>
+	</tr>
+</table>
+
+<br/>
+<br/>
+
+    <h2><a name="Functions"></a>Functions</h2>
+    
+    <dl class="function">
+    <dt>
+    <a name = "quit"></a>
+    <strong>quit&nbsp;(msg, no_usage)</strong>
+    </dt>
+    <dd>
+    quit this script immediately.
+    
+
+    <h3>Parameters:</h3>
+    <ul>
+       <li><code><em>msg</em></code>:  optional message</li>
+       <li><code><em>no_usage</em></code>:  suppress 'usage' display</li>
+    </ul>
+
+
+
+</dd>
+    <dt>
+    <a name = "error"></a>
+    <strong>error&nbsp;(msg, no_usage)</strong>
+    </dt>
+    <dd>
+    print an error to stderr and quit.
+    
+
+    <h3>Parameters:</h3>
+    <ul>
+       <li><code><em>msg</em></code>:  a message</li>
+       <li><code><em>no_usage</em></code>:  suppress 'usage' display</li>
+    </ul>
+
+
+
+</dd>
+    <dt>
+    <a name = "open"></a>
+    <strong>open&nbsp;(file, opt)</strong>
+    </dt>
+    <dd>
+    open a file.
+    This will quit on error, and keep a list of file objects for later cleanup.
+
+    <h3>Parameters:</h3>
+    <ul>
+       <li><code><em>file</em></code>:  filename</li>
+       <li><code><em>opt</em></code>:  same as second parameter of <code>io.open</code></li>
+    </ul>
+
+
+
+</dd>
+    <dt>
+    <a name = "assert"></a>
+    <strong>assert&nbsp;(condn, msg)</strong>
+    </dt>
+    <dd>
+    quit if the condition is false.
+    
+
+    <h3>Parameters:</h3>
+    <ul>
+       <li><code><em>condn</em></code>:  a condition</li>
+       <li><code><em>msg</em></code>:  an optional message</li>
+    </ul>
+
+
+
+</dd>
+    <dt>
+    <a name = "add_type"></a>
+    <strong>add_type&nbsp;(name, converter, constraint)</strong>
+    </dt>
+    <dd>
+    add a new type to Lapp.
+    These appear in parens after the value like
+ a range constraint, e.g. '<ival> (integer) Process PID'
+
+    <h3>Parameters:</h3>
+    <ul>
+       <li><code><em>name</em></code>:  name of type</li>
+       <li><code><em>converter</em></code>:  either a function to convert values, or a Lua type name.</li>
+       <li><code><em>constraint</em></code>:  optional function to verify values, should use lapp.error
+ if failed.</li>
+    </ul>
+
+
+
+</dd>
+    <dt>
+    <a name = "process_options_string"></a>
+    <strong>process_options_string&nbsp;(str)</strong>
+    </dt>
+    <dd>
+    process a Lapp options string.
+    Usually called as lapp().
+
+    <h3>Parameters:</h3>
+    <ul>
+       <li><code><em>str</em></code>:  the options text</li>
+    </ul>
+
+
+    <h3>Returns:</h3>
+    <ol>
+        a table with parameter-value pairs
+    </ol>
+
+</dd>
+</dl>
+
+
+</div> <!-- id="content" -->
+</div> <!-- id="main" -->
+<div id="about">
+</div> <!-- id="about" -->
+</div> <!-- id="container" -->
+</body>
+</html>
+

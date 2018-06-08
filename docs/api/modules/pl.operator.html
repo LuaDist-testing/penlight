@@ -1,0 +1,575 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html>
+<head>
+    <title>Penlight Documentation</title>
+    <link rel="stylesheet" href="../ldoc.css" type="text/css" />
+</head>
+<body>
+
+<div id="container">
+
+<div id="product">
+	<div id="product_logo"></div>
+	<div id="product_name"><big><b></b></big></div>
+	<div id="product_description"></div>
+</div> <!-- id="product" -->
+
+<div id="main">
+
+
+<!-- Menu -->
+
+
+<div id="navigation">
+<h1>Penlight</h1>
+<ul>
+  <li><a href="../index.html">Index</a></li>
+</ul>
+
+<h2>Contents</h2>
+<ul>
+<li><a href="#Functions">Functions</a></li>
+</ul>
+
+<h2>Modules</h2>
+<ul>
+  <li><a href="pl.html">pl</a></li>
+  <li><a href="pl.Date.html">pl.Date</a></li>
+  <li><a href="pl.List.html">pl.List</a></li>
+  <li><a href="pl.Map.html">pl.Map</a></li>
+  <li><a href="pl.MultiMap.html">pl.MultiMap</a></li>
+  <li><a href="pl.OrderedMap.html">pl.OrderedMap</a></li>
+  <li><a href="pl.Set.html">pl.Set</a></li>
+  <li><a href="pl.app.html">pl.app</a></li>
+  <li><a href="pl.array2d.html">pl.array2d</a></li>
+  <li><a href="pl.class.html">pl.class</a></li>
+  <li><a href="pl.comprehension.html">pl.comprehension</a></li>
+  <li><a href="pl.config.html">pl.config</a></li>
+  <li><a href="pl.data.html">pl.data</a></li>
+  <li><a href="pl.dir.html">pl.dir</a></li>
+  <li><a href="pl.file.html">pl.file</a></li>
+  <li><a href="pl.func.html">pl.func</a></li>
+  <li><a href="pl.input.html">pl.input</a></li>
+  <li><a href="pl.lapp.html">pl.lapp</a></li>
+  <li><a href="pl.lexer.html">pl.lexer</a></li>
+  <li><a href="pl.luabalanced.html">pl.luabalanced</a></li>
+  <li><strong>pl.operator</strong></li>
+  <li><a href="pl.path.html">pl.path</a></li>
+  <li><a href="pl.permute.html">pl.permute</a></li>
+  <li><a href="pl.pretty.html">pl.pretty</a></li>
+  <li><a href="pl.seq.html">pl.seq</a></li>
+  <li><a href="pl.sip.html">pl.sip</a></li>
+  <li><a href="pl.strict.html">pl.strict</a></li>
+  <li><a href="pl.stringio.html">pl.stringio</a></li>
+  <li><a href="pl.stringx.html">pl.stringx</a></li>
+  <li><a href="pl.tablex.html">pl.tablex</a></li>
+  <li><a href="pl.template.html">pl.template</a></li>
+  <li><a href="pl.test.html">pl.test</a></li>
+  <li><a href="pl.text.html">pl.text</a></li>
+  <li><a href="pl.utils.html">pl.utils</a></li>
+</ul>
+
+</div>
+
+<div id="content">
+
+
+<h1>Module <code>pl.operator</code></h1>
+
+
+<p>Lua operators available as functions.</p>
+<p>(similar to the Python module of the same name)<br>
+ There is a module field <code>optable</code> which maps the operator strings
+ onto these functions, e.g. <pre class=example>operator.optable['()']==operator.call</pre></p>
+
+<h2><a href="#Functions">Functions</a></h2>
+<table class="function_list">
+	<tr>
+	<td class="name" nowrap><a href="#call">call&nbsp;(fn, ...)</a></td>
+	<td class="summary">apply function to some arguments ()</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#index">index&nbsp;(t, k)</a></td>
+	<td class="summary">get the indexed value from a table []</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#eq">eq&nbsp;(a, b)</a></td>
+	<td class="summary">returns true if arguments are equal ==</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#neq">neq&nbsp;(a, b)</a></td>
+	<td class="summary">returns true if arguments are not equal ~=</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#lt">lt&nbsp;(a, b)</a></td>
+	<td class="summary">returns true if a is less than b <</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#le">le&nbsp;(a, b)</a></td>
+	<td class="summary">returns true if a is less or equal to b <=</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#gt">gt&nbsp;(a, b)</a></td>
+	<td class="summary">returns true if a is greater than b ></td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#ge">ge&nbsp;(a, b)</a></td>
+	<td class="summary">returns true if a is greater or equal to b >=</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#len">len&nbsp;(a)</a></td>
+	<td class="summary">returns length of string or table #</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#add">add&nbsp;(a, b)</a></td>
+	<td class="summary">add two values +</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#sub">sub&nbsp;(a, b)</a></td>
+	<td class="summary">subtract b from a -</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#mul">mul&nbsp;(a, b)</a></td>
+	<td class="summary">multiply two values *</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#div">div&nbsp;(a, b)</a></td>
+	<td class="summary">divide first value by second /</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#pow">pow&nbsp;(a, b)</a></td>
+	<td class="summary">raise first to the power of second ^</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#mod">mod&nbsp;(a, b)</a></td>
+	<td class="summary">modulo; remainder of a divided by b %</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#concat">concat&nbsp;(a, a, b)</a></td>
+	<td class="summary">concatenate two values (either strings or __concat defined) ..</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#unm">unm&nbsp;(a, a)</a></td>
+	<td class="summary">return the negative of a value -</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#lnot">lnot&nbsp;(a)</a></td>
+	<td class="summary">false if value evaluates as true (i.e.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#land">land&nbsp;(a, a, b)</a></td>
+	<td class="summary">true if both values evaluate as true (i.e.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#lor">lor&nbsp;(a, a, b)</a></td>
+	<td class="summary">true if either value evaluate as true (i.e.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#table">table&nbsp;(...)</a></td>
+	<td class="summary">make a table from the arguments.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#nop">nop&nbsp;(...)</a></td>
+	<td class="summary">the null operation.</td>
+	</tr>
+</table>
+
+<br/>
+<br/>
+
+    <h2><a name="Functions"></a>Functions</h2>
+    
+    <dl class="function">
+    <dt>
+    <a name = "call"></a>
+    <strong>call&nbsp;(fn, ...)</strong>
+    </dt>
+    <dd>
+    apply function to some arguments ()
+    
+
+    <h3>Parameters:</h3>
+    <ul>
+       <li><code><em>fn</em></code>:  a function or callable object</li>
+       <li><code><em>...</em></code>: </li>
+    </ul>
+
+
+
+</dd>
+    <dt>
+    <a name = "index"></a>
+    <strong>index&nbsp;(t, k)</strong>
+    </dt>
+    <dd>
+    get the indexed value from a table []
+    
+
+    <h3>Parameters:</h3>
+    <ul>
+       <li><code><em>t</em></code>:  a table or any indexable object</li>
+       <li><code><em>k</em></code>:  the key</li>
+    </ul>
+
+
+
+</dd>
+    <dt>
+    <a name = "eq"></a>
+    <strong>eq&nbsp;(a, b)</strong>
+    </dt>
+    <dd>
+    returns true if arguments are equal ==
+    
+
+    <h3>Parameters:</h3>
+    <ul>
+       <li><code><em>a</em></code>:  value</li>
+       <li><code><em>b</em></code>:  value</li>
+    </ul>
+
+
+
+</dd>
+    <dt>
+    <a name = "neq"></a>
+    <strong>neq&nbsp;(a, b)</strong>
+    </dt>
+    <dd>
+    returns true if arguments are not equal ~=
+    
+
+    <h3>Parameters:</h3>
+    <ul>
+       <li><code><em>a</em></code>:  value</li>
+       <li><code><em>b</em></code>:  value</li>
+    </ul>
+
+
+
+</dd>
+    <dt>
+    <a name = "lt"></a>
+    <strong>lt&nbsp;(a, b)</strong>
+    </dt>
+    <dd>
+    returns true if a is less than b <
+    
+
+    <h3>Parameters:</h3>
+    <ul>
+       <li><code><em>a</em></code>:  value</li>
+       <li><code><em>b</em></code>:  value</li>
+    </ul>
+
+
+
+</dd>
+    <dt>
+    <a name = "le"></a>
+    <strong>le&nbsp;(a, b)</strong>
+    </dt>
+    <dd>
+    returns true if a is less or equal to b <=
+    
+
+    <h3>Parameters:</h3>
+    <ul>
+       <li><code><em>a</em></code>:  value</li>
+       <li><code><em>b</em></code>:  value</li>
+    </ul>
+
+
+
+</dd>
+    <dt>
+    <a name = "gt"></a>
+    <strong>gt&nbsp;(a, b)</strong>
+    </dt>
+    <dd>
+    returns true if a is greater than b >
+    
+
+    <h3>Parameters:</h3>
+    <ul>
+       <li><code><em>a</em></code>:  value</li>
+       <li><code><em>b</em></code>:  value</li>
+    </ul>
+
+
+
+</dd>
+    <dt>
+    <a name = "ge"></a>
+    <strong>ge&nbsp;(a, b)</strong>
+    </dt>
+    <dd>
+    returns true if a is greater or equal to b >=
+    
+
+    <h3>Parameters:</h3>
+    <ul>
+       <li><code><em>a</em></code>:  value</li>
+       <li><code><em>b</em></code>:  value</li>
+    </ul>
+
+
+
+</dd>
+    <dt>
+    <a name = "len"></a>
+    <strong>len&nbsp;(a)</strong>
+    </dt>
+    <dd>
+    returns length of string or table #
+    
+
+    <h3>Parameters:</h3>
+    <ul>
+       <li><code><em>a</em></code>:  a string or a table</li>
+    </ul>
+
+
+
+</dd>
+    <dt>
+    <a name = "add"></a>
+    <strong>add&nbsp;(a, b)</strong>
+    </dt>
+    <dd>
+    add two values +
+    
+
+    <h3>Parameters:</h3>
+    <ul>
+       <li><code><em>a</em></code>:  value</li>
+       <li><code><em>b</em></code>:  value</li>
+    </ul>
+
+
+
+</dd>
+    <dt>
+    <a name = "sub"></a>
+    <strong>sub&nbsp;(a, b)</strong>
+    </dt>
+    <dd>
+    subtract b from a -
+    
+
+    <h3>Parameters:</h3>
+    <ul>
+       <li><code><em>a</em></code>:  value</li>
+       <li><code><em>b</em></code>:  value</li>
+    </ul>
+
+
+
+</dd>
+    <dt>
+    <a name = "mul"></a>
+    <strong>mul&nbsp;(a, b)</strong>
+    </dt>
+    <dd>
+    multiply two values *
+    
+
+    <h3>Parameters:</h3>
+    <ul>
+       <li><code><em>a</em></code>:  value</li>
+       <li><code><em>b</em></code>:  value</li>
+    </ul>
+
+
+
+</dd>
+    <dt>
+    <a name = "div"></a>
+    <strong>div&nbsp;(a, b)</strong>
+    </dt>
+    <dd>
+    divide first value by second /
+    
+
+    <h3>Parameters:</h3>
+    <ul>
+       <li><code><em>a</em></code>:  value</li>
+       <li><code><em>b</em></code>:  value</li>
+    </ul>
+
+
+
+</dd>
+    <dt>
+    <a name = "pow"></a>
+    <strong>pow&nbsp;(a, b)</strong>
+    </dt>
+    <dd>
+    raise first to the power of second ^
+    
+
+    <h3>Parameters:</h3>
+    <ul>
+       <li><code><em>a</em></code>:  value</li>
+       <li><code><em>b</em></code>:  value</li>
+    </ul>
+
+
+
+</dd>
+    <dt>
+    <a name = "mod"></a>
+    <strong>mod&nbsp;(a, b)</strong>
+    </dt>
+    <dd>
+    modulo; remainder of a divided by b %
+    
+
+    <h3>Parameters:</h3>
+    <ul>
+       <li><code><em>a</em></code>:  value</li>
+       <li><code><em>b</em></code>:  value</li>
+    </ul>
+
+
+
+</dd>
+    <dt>
+    <a name = "concat"></a>
+    <strong>concat&nbsp;(a, a, b)</strong>
+    </dt>
+    <dd>
+    concatenate two values (either strings or __concat defined) ..
+    
+
+    <h3>Parameters:</h3>
+    <ul>
+       <li><code><em>a</em></code>:  value</li>
+       <li><code><em>a</em></code>:  value</li>
+       <li><code><em>b</em></code>: </li>
+    </ul>
+
+
+
+</dd>
+    <dt>
+    <a name = "unm"></a>
+    <strong>unm&nbsp;(a, a)</strong>
+    </dt>
+    <dd>
+    return the negative of a value -
+    
+
+    <h3>Parameters:</h3>
+    <ul>
+       <li><code><em>a</em></code>:  value</li>
+       <li><code><em>a</em></code>:  value</li>
+    </ul>
+
+
+
+</dd>
+    <dt>
+    <a name = "lnot"></a>
+    <strong>lnot&nbsp;(a)</strong>
+    </dt>
+    <dd>
+    false if value evaluates as true (i.e.
+    not nil or false) not
+
+    <h3>Parameters:</h3>
+    <ul>
+       <li><code><em>a</em></code>:  value</li>
+    </ul>
+
+
+
+</dd>
+    <dt>
+    <a name = "land"></a>
+    <strong>land&nbsp;(a, a, b)</strong>
+    </dt>
+    <dd>
+    true if both values evaluate as true (i.e.
+    not nil or false) and
+
+    <h3>Parameters:</h3>
+    <ul>
+       <li><code><em>a</em></code>:  value</li>
+       <li><code><em>a</em></code>:  value</li>
+       <li><code><em>b</em></code>: </li>
+    </ul>
+
+
+
+</dd>
+    <dt>
+    <a name = "lor"></a>
+    <strong>lor&nbsp;(a, a, b)</strong>
+    </dt>
+    <dd>
+    true if either value evaluate as true (i.e.
+    not nil or false) or
+
+    <h3>Parameters:</h3>
+    <ul>
+       <li><code><em>a</em></code>:  value</li>
+       <li><code><em>a</em></code>:  value</li>
+       <li><code><em>b</em></code>: </li>
+    </ul>
+
+
+
+</dd>
+    <dt>
+    <a name = "table"></a>
+    <strong>table&nbsp;(...)</strong>
+    </dt>
+    <dd>
+    make a table from the arguments.
+    {}
+
+    <h3>Parameters:</h3>
+    <ul>
+       <li><code><em>...</em></code>:  non-nil arguments</li>
+    </ul>
+
+
+    <h3>Returns:</h3>
+    <ol>
+        a table
+    </ol>
+
+</dd>
+    <dt>
+    <a name = "nop"></a>
+    <strong>nop&nbsp;(...)</strong>
+    </dt>
+    <dd>
+    the null operation.
+    
+
+    <h3>Parameters:</h3>
+    <ul>
+       <li><code><em>...</em></code>:  arguments</li>
+    </ul>
+
+
+    <h3>Returns:</h3>
+    <ol>
+        the arguments
+    </ol>
+
+</dd>
+</dl>
+
+
+</div> <!-- id="content" -->
+</div> <!-- id="main" -->
+<div id="about">
+</div> <!-- id="about" -->
+</div> <!-- id="container" -->
+</body>
+</html>
+

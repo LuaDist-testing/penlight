@@ -1,6 +1,8 @@
---- Date and Date.Format classes. <br>
+--- Date and Date Format classes.
+-- See  <a href="../../index.html#date">the Guide</a>.
 -- @class module
 -- @name pl.Date
+-- @pragma nostrip
 
 --[[
 module("pl.Date")

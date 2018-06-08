@@ -1,4 +1,5 @@
 --- Generally useful routines.
+-- See  <a href="../../index.html#utils">the Guide</a>.
 -- @class module
 -- @name pl.utils
 local format,gsub,byte = string.format,string.gsub,string.byte
@@ -7,10 +8,6 @@ local stdout = io.stdout
 local append = table.insert
 
 local collisions = {}
-
---[[
-module ('pl.utils')
-]]
 
 local utils = {}
 
@@ -23,12 +20,13 @@ utils.dir_separator = _G.package.config:sub(1,1)
 -- @param msg A message to be printed
 -- @param ... extra arguments for message's format'
 -- @see utils.fprintf
-function utils.quit(code,msg,...)
+function utils.quit(code,...)
     if type(code) == 'string' then
-        msg = code
+        utils.fprintf(io.stderr,code,...)
         code = -1
+    else
+        utils.fprintf(io.stderr,...)
     end
-    utils.fprintf(io.stderr,msg,...)
     io.stderr:write('\n')
     os.exit(code)
 end
@@ -112,6 +110,7 @@ local raise
 
 --- return the contents of a file as a string
 -- @param filename The file path
+-- @param is_bin open in binary mode
 -- @return file contents
 function utils.readfile(filename,is_bin)
     local mode = is_bin and 'b' or ''
@@ -190,22 +189,41 @@ function utils.splitv (s,re)
     return unpack(utils.split(s,re))
 end
 
-if not loadin then
-    function loadin(env,str,src)
+local lua52 = table.pack ~= nil
+local lua51_load = load
+
+if not lua52 then -- define Lua 5.2 style load()
+    function load(str,src,mode,env)
         local chunk,err
         if type(str) == 'string' then
             chunk,err = loadstring(str,src)
         else
-            chunk,err = load(str,src)
+            chunk,err = lua51_load(str,src)
         end
-        if chunk then setfenv(chunk,env) end
+        if chunk and env then setfenv(chunk,env) end
         return chunk,err
     end
 end
 
-if not table.pack then
+
+--- execute a shell command.
+-- This is a compatibility function that returns the same for Lua 5.1 and Lua 5.2
+-- @param cmd a shell command
+-- @return true if successful
+-- @return actual return code
+function utils.execute (cmd)
+    local res1,res2,res2 = os.execute(cmd)
+    if not lua52 then
+        return res1==0,res1
+    else
+        return res1,res2
+    end
+end
+
+if not lua52 then
     function table.pack (...)
-        return {n=select('#',...); ...}
+        local n = select('#',...)
+        return {n=n; ...},n
     end
 end
 if not table.pack then table.pack = pack end
@@ -379,6 +397,25 @@ function utils.raise (err)
 end
 
 raise = utils.raise
+
+--- Lua 5.2 Compatible Functions
+-- @section lua52
+
+--- load a code string or bytecode chunk.
+-- @param code Lua code as a string or bytecode
+-- @param name for source errors
+-- @param mode kind of chunk, 't' for text, 'b' for bytecode, 'bt' for all (default)
+-- @param env  the environment for the new chunk (default nil)
+-- @return compiled chunk
+-- @return error message (chunk is nil)
+-- @function load
+
+--- pack an argument list into a table.
+-- @param ... any arguments
+-- @return a table with field n set to the length
+-- @return the length
+-- @function table.pack
+
 
 return utils
 
