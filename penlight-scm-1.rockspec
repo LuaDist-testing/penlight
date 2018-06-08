@@ -1,18 +1,9 @@
--- This file was automatically generated for the LuaDist project.
-
 package = "penlight"
-version = "1.3.2-2"
+version = "scm-1"
 
--- LuaDist source
 source = {
-  tag = "1.3.2-2",
-  url = "git://github.com/LuaDist-testing/penlight.git"
+  url = "git://github.com/stevedonovan/Penlight.git",
 }
--- Original source
--- source = {
---   url = "http://stevedonovan.github.io/files/penlight-1.3.2-core.zip",
---   dir = "penlight-1.3.2"
--- }
 
 description = {
   summary = "Lua utility libraries loosely based on the Python standard libraries",
@@ -27,12 +18,13 @@ on tables and sequences.
 }
 
 dependencies = {
-  "luafilesystem",
+  "luafilesystem"
 }
 
 build = {
   type = "builtin",
   modules = {
+    ["pl"] = "lua/pl/init.lua",
     ["pl.strict"] = "lua/pl/strict.lua",
     ["pl.dir"] = "lua/pl/dir.lua",
     ["pl.operator"] = "lua/pl/operator.lua",
@@ -47,6 +39,7 @@ build = {
     ["pl.stringx"] = "lua/pl/stringx.lua",
     ["pl.lexer"] = "lua/pl/lexer.lua",
     ["pl.utils"] = "lua/pl/utils.lua",
+    ["pl.compat"] = "lua/pl/compat.lua",
     ["pl.sip"] = "lua/pl/sip.lua",
     ["pl.permute"] = "lua/pl/permute.lua",
     ["pl.pretty"] = "lua/pl/pretty.lua",
@@ -54,7 +47,6 @@ build = {
     ["pl.List"] = "lua/pl/List.lua",
     ["pl.data"] = "lua/pl/data.lua",
     ["pl.Date"] = "lua/pl/Date.lua",
-    ["pl.init"] = "lua/pl/init.lua",
     ["pl.luabalanced"] = "lua/pl/luabalanced.lua",
     ["pl.comprehension"] = "lua/pl/comprehension.lua",
     ["pl.path"] = "lua/pl/path.lua",
@@ -69,7 +61,8 @@ build = {
     ["pl.Set"] = "lua/pl/Set.lua",
     ["pl.xml"] = "lua/pl/xml.lua",
     ["pl.url"] = "lua/pl/url.lua",
-    ["pl.import_into"] = "lua/pl/import_into.lua",
     ["pl.types"] = "lua/pl/types.lua",
+    ["pl.import_into"] = "lua/pl/import_into.lua"
   },
+  copy_directories = {"doc", "tests"}
 }
