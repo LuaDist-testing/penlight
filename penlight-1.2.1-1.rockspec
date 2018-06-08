@@ -1,17 +1,17 @@
 -- This file was automatically generated for the LuaDist project.
 
 package = "penlight"
-version = "1.1.0-3"
+version = "1.2.1-1"
 
 -- LuaDist source
 source = {
-  tag = "1.1.0-3",
+  tag = "1.2.1-1",
   url = "git://github.com/LuaDist-testing/penlight.git"
 }
 -- Original source
 -- source = {
---   dir = "penlight-1.1.0",
---   url = "http://stevedonovan.github.com/files/penlight-1.1.0-core.zip",
+--   dir = "penlight-1.2.1",
+--   url = "http://stevedonovan.github.com/files/penlight-1.2.1-core.zip",
 -- }
 
 description = {
@@ -47,6 +47,7 @@ build = {
     ["pl.stringx"] = "lua/pl/stringx.lua",
     ["pl.lexer"] = "lua/pl/lexer.lua",
     ["pl.utils"] = "lua/pl/utils.lua",
+    ["pl.compat"] = "lua/pl/compat.lua",
     ["pl.sip"] = "lua/pl/sip.lua",
     ["pl.permute"] = "lua/pl/permute.lua",
     ["pl.pretty"] = "lua/pl/pretty.lua",
