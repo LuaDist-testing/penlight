@@ -18,9 +18,12 @@ local append = table.insert
 local wrap = coroutine.wrap
 local yield = coroutine.yield
 local assert_arg,assert_string,raise = utils.assert_arg,utils.assert_string,utils.raise
-local List = utils.stdmt.List
 
 local dir = {}
+
+local function makelist(l)
+    return setmetatable(l, require('pl.List'))
+end
 
 local function assert_dir (n,val)
     assert_arg(n,val,'string',path.isdir,'not a directory',4)
@@ -63,7 +66,7 @@ function dir.filter(filenames,pattern)
     for i,f in ipairs(filenames) do
         if path.normcase(f):find(mask) then append(res,f) end
     end
-    return setmetatable(res,List)
+    return makelist(res)
 end
 
 local function _listfiles(dir,filemode,match)
@@ -78,7 +81,7 @@ local function _listfiles(dir,filemode,match)
             end
         end
     end
-    return setmetatable(res,List)
+    return makelist(res)
 end
 
 --- return a list of all files in a directory which match the a shell pattern.
@@ -266,7 +269,7 @@ local function _dirfiles(dir,attrib)
             end
         end
     end
-    return setmetatable(dirs,List),setmetatable(files,List)
+    return makelist(dirs), makelist(files)
 end
 
 
@@ -453,7 +456,7 @@ end
 -- @raise start_path must be a directory
 function dir.getallfiles( start_path, pattern )
     assert_dir(1,start_path)
-    pattern = pattern or ""
+    pattern = pattern or "*"
 
     local files = {}
     local normcase = path.normcase
@@ -466,7 +469,7 @@ function dir.getallfiles( start_path, pattern )
         end
     end
 
-    return setmetatable(files,List)
+    return makelist(files)
 end
 
 return dir
