@@ -1,17 +1,17 @@
 --- Generally useful routines.
 -- See  @{01-introduction.md.Generally_useful_functions|the Guide}.
+--
+-- Dependencies: `pl.compat`
+--
 -- @module pl.utils
-local format,gsub,byte = string.format,string.gsub,string.byte
+local format = string.format
 local compat = require 'pl.compat'
-local clock = os.clock
 local stdout = io.stdout
 local append = table.insert
 local unpack = rawget(_G,'unpack') or rawget(table,'unpack')
 
-local collisions = {}
-
 local utils = {
-    _VERSION = "1.4.0",
+    _VERSION = "1.4.1",
     lua51 = compat.lua51,
     setfenv = compat.setfenv,
     getfenv = compat.getfenv,
@@ -344,7 +344,7 @@ end
 -- @param lf function as a string
 -- @return a function
 -- @usage string_lambda '|x|x+1' (2) == 3
--- @usage string_lambda '_+1 (2) == 3
+-- @usage string_lambda '_+1' (2) == 3
 -- @function utils.string_lambda
 utils.string_lambda = utils.memoize(_string_lambda)
 

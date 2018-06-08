@@ -91,6 +91,11 @@ asserteq(
 )
 
 asserteq(
+    count_map({"foo", "bar", "foo", "baz"}),
+    {foo = 2, bar = 1, baz = 1}
+)
+
+asserteq(
     zip({10,20,30},{100,200,300}),
     {{10,100},{20,200},{30,300}}
 )
@@ -176,7 +181,8 @@ asserteq(index_map({10,20,30}), {[10]=1,[20]=2,[30]=3})
 --test that repeated values return multiple indices
 asserteq(index_map({10,20,30,30,30}), {[10]=1,[20]=2,[30]={3,4,5}})
 
-
-
-
-
+-- Reduce
+asserteq(tablex.reduce('-', {}, 2), 2)
+asserteq(tablex.reduce('-', {}), nil)
+asserteq(tablex.reduce('-', {1,2,3,4,5}), -13)
+asserteq(tablex.reduce('-', {1,2,3,4,5}, 1), -14)

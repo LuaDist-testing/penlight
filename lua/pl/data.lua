@@ -24,18 +24,12 @@ local patterns,function_arg,usplit,array_tostring = utils.patterns,utils.functio
 local append,concat = table.insert,table.concat
 local gsub = string.gsub
 local io = io
-local _G,print,type,tonumber,ipairs,setmetatable,pcall,error = _G,print,type,tonumber,ipairs,setmetatable,pcall,error
+local _G,print,type,tonumber,ipairs,setmetatable = _G,print,type,tonumber,ipairs,setmetatable
 
 
 local data = {}
 
 local parse_select
-
-local function count(s,chr)
-    chr = utils.escape(chr)
-    local _,cnt = s:gsub(chr,' ')
-    return cnt
-end
 
 local function rstrip(s)
     return (s:gsub('%s+$',''))
@@ -160,12 +154,12 @@ end
 
 -- [guessing delimiter] We check for comma, tab and spaces in that order.
 -- [issue] any other delimiters to be checked?
-local delims = {',','\t',' ',';'}
+local delims = {',', '\t', ' ', ';'}
 
 local function guess_delim (line)
     if line=='' then return ' ' end
     for _,delim in ipairs(delims) do
-        if count(line,delim) > 0 then
+        if line:find(delim) then
             return delim == ' ' and '%s+' or delim
         end
     end

@@ -57,8 +57,8 @@ local function parseDollarParen(pieces, chunk, exec_pat)
     append(pieces, format("%q", strsub(chunk,s)))
 end
 
-local function parseHashLines(chunk,brackets,esc)
-    local exec_pat = "()$(%b"..brackets..")()"
+local function parseHashLines(chunk,inline_escape,brackets,esc)
+    local exec_pat = "()"..inline_escape.."(%b"..brackets..")()"
 
     local esc_pat = esc.."+([^\n]*\n?)"
     local esc_pat1, esc_pat2 = "^"..esc_pat, "\n"..esc_pat
@@ -84,10 +84,13 @@ local template = {}
 --- expand the template using the specified environment.
 -- There are three special fields in the environment table `env`
 --
---   * `_parent` continue looking up in this table (e.g. `_parent=_G`)
---   * `_brackets`; default is '()', can be any suitable bracket pair
---   * `_escape`; default is '#'
--- 
+--   * `_parent`: continue looking up in this table (e.g. `_parent=_G`).
+--   * `_brackets`: bracket pair that wraps inline Lua expressions,  default is '()'.
+--   * `_escape`: character marking Lua lines, default is '#'
+--   * `_inline_escape`: character marking inline Lua expression, default is '$'.
+--   * `_chunk_name`: chunk name for loaded templates, used if there
+--     is an error in Lua code. Default is 'TMP'.
+--
 -- @string str the template string
 -- @tab[opt] env the environment
 function template.substitute(str,env)
@@ -95,10 +98,12 @@ function template.substitute(str,env)
     if rawget(env,"_parent") then
         setmetatable(env,{__index = env._parent})
     end
+    local chunk_name = rawget(env,"_chunk_name") or 'TMP'
     local brackets = rawget(env,"_brackets") or '()'
     local escape = rawget(env,"_escape") or '#'
-    local code = parseHashLines(str,brackets,escape)
-    local fn,err = utils.load(code,'TMP','t',env)
+    local inline_escape = rawget(env,"_inline_escape") or '$'
+    local code = parseHashLines(str,inline_escape,brackets,escape)
+    local fn,err = utils.load(code,chunk_name,'t',env)
     if not fn then return nil,err end
     fn = fn()
     local out = {}
@@ -113,7 +118,3 @@ function template.substitute(str,env)
 end
 
 return template
-
-
-
-

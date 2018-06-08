@@ -8,8 +8,8 @@ local utils = require ('pl.utils')
 local types = require ('pl.types')
 local getmetatable,setmetatable,require = getmetatable,setmetatable,require
 local tsort,append,remove = table.sort,table.insert,table.remove
-local min,max = math.min,math.max
-local pairs,type,unpack,next,select,tostring = pairs,type,utils.unpack,next,select,tostring
+local min = math.min
+local pairs,type,unpack,select,tostring = pairs,type,utils.unpack,select,tostring
 local function_arg = utils.function_arg
 local assert_arg = utils.assert_arg
 
@@ -399,13 +399,17 @@ end
 --- 'reduce' a list using a binary function.
 -- @func fun a function of two arguments
 -- @array t a list-like table
+-- @array memo optional initial memo value. Defaults to first value in table.
 -- @return the result of the function
 -- @usage reduce('+',{1,2,3,4}) == 10
-function tablex.reduce (fun,t)
+function tablex.reduce (fun,t,memo)
     assert_arg_indexable(2,t)
     fun = function_arg(1,fun)
     local n = #t
-    local res = t[1]
+    if n == 0 then
+        return memo
+    end
+    local res = memo and fun(memo, t[1]) or t[1]
     for i = 2,n do
         res = fun(res,t[i])
     end
@@ -640,7 +644,7 @@ function tablex.count_map (t,cmp)
             end
         end
     end
-    return setmetatable(res,'Map')
+    return makemap(res)
 end
 
 --- filter an array's values using a predicate function
