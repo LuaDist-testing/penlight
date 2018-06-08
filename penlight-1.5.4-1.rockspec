@@ -1,17 +1,17 @@
 -- This file was automatically generated for the LuaDist project.
 
 package = "penlight"
-version = "1.5.3-1"
+version = "1.5.4-1"
 
 -- LuaDist source
 source = {
-  tag = "1.5.3-1",
+  tag = "1.5.4-1",
   url = "git://github.com/LuaDist-testing/penlight.git"
 }
 -- Original source
 -- source = {
---   url = "http://stevedonovan.github.io/files/penlight-1.5.3.zip",
---   dir = "penlight-1.5.3"
+--   url = "http://stevedonovan.github.io/files/penlight-1.5.4.zip",
+--   dir = "penlight-1.5.4"
 -- }
 
 description = {
