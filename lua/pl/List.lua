@@ -26,10 +26,7 @@ local filter,imap,imap2,reduce,transform,tremovevalues = tablex.filter,tablex.im
 local tablex = tablex
 local tsub = tablex.sub
 local utils = require 'pl.utils'
-local function_arg = utils.function_arg
-local is_type = utils.is_type
-local split = utils.split
-local assert_arg = utils.assert_arg
+local array_tostring,split,is_type,assert_arg,function_arg = utils.array_tostring,utils.split,utils.is_type,utils.assert_arg,utils.function_arg
 local normalize_slice = tablex._normalize_slice
 
 --[[
@@ -273,7 +270,7 @@ end
 --- empty the list.
 -- @return the list
 function List:clear()
-    for i=1,#self do tremove(self,i) end
+    for i=1,#self do tremove(self) end
     return self
 end
 
@@ -282,15 +279,20 @@ local eps = 1.0e-10
 --- Emulate Python's range(x) function.
 -- Include it in List table for tidiness
 -- @param start A number
--- @param finish A number greater than start; if zero, then 0..start-1
+-- @param finish A number greater than start; if absent,
+-- then start is 1 and finish is start
 -- @param incr an optional increment (may be less than 1)
--- @usage List.range(0,3) == List {0,1,2,3}
+-- @return a List from start .. finish
+-- @usage List.range(0,3) == List{0,1,2,3}
+-- @usage List.range(4) = List{1,2,3,4}
+-- @usage List.range(5,1,-1) == List{5,4,3,2,1}
 function List.range(start,finish,incr)
   if not finish then
-    start = 0
-    finish = finish - 1
+    finish = start
+    start = 1
   end
   if incr then
+    assert_arg(3,incr,'number')
     if not utils.is_integer(incr) then finish = finish + eps end
   else
     incr = 1
@@ -377,7 +379,7 @@ end
 function List:join (delim)
     delim = delim or ''
     assert_arg(1,delim,'string')
-    return concat(imap(tostring,self),delim)
+    return concat(array_tostring(self),delim)
 end
 
 --- join a list of strings. <br>
@@ -500,8 +502,10 @@ end
 -- Any extra arguments are passed to the function.
 -- @param fun A function that takes at least one argument
 -- @param ... arbitrary extra arguments.
+-- @return the list.
 function List:transform (fun,...)
     transform(fun,self,...)
+	return self
 end
 
 --- apply a function to elements of two lists.

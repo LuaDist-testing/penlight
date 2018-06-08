@@ -16,23 +16,23 @@
 --     > = fruit*colours
 --     [orange]
 --
--- Depdencies: `pl.utils`, `pl.tablex`, `pl.class`
+-- Depdencies: `pl.utils`, `pl.tablex`, `pl.class`, (`pl.List` if __tostring is used)
 -- @module pl.Set
 
 local tablex = require 'pl.tablex'
 local utils = require 'pl.utils'
-local stdmt = utils.stdmt
+local array_tostring, concat = utils.array_tostring, table.concat
 local tmakeset,deepcompare,merge,keys,difference,tupdate = tablex.makeset,tablex.deepcompare,tablex.merge,tablex.keys,tablex.difference,tablex.update
-local Map = stdmt.Map
-local Set = stdmt.Set
-local List = stdmt.List
+local Map = require 'pl.Map'
 local class = require 'pl.class'
+local stdmt = utils.stdmt
+local Set = stdmt.Set
 
 -- the Set class --------------------
 class(Map,nil,Set)
 
 -- note: Set has _no_ methods!
-Map.__index = nil
+Set.__index = nil
 
 local function makeset (t)
     return setmetatable(t,Set)
@@ -52,7 +52,7 @@ function Set:_init (t)
 end
 
 function Set:__tostring ()
-    return '['..self:keys():join ','..']'
+    return '['..concat(array_tostring(Set.values(self)),',')..']'
 end
 
 --- get a list of the values in a set.
@@ -136,6 +136,18 @@ end
 -- @return true or false
 function Set.isdisjoint (s1,s2)
     return Set.isempty(Set.intersection(s1,s2))
+end
+
+--- size of this set (also # for 5.2).
+-- @param s a Set
+-- @return size
+-- @function Set.len
+Set.len = tablex.size
+
+Set.__len = Set.len
+
+function Set.__eq (s1,s2)
+    return Set.issubset(s1,s2) and Set.issubset(s2,s1)
 end
 
 return Set

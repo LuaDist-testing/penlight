@@ -10,7 +10,15 @@ local collisions = {}
 
 local utils = {}
 
-utils._VERSION = "0.9.8"
+utils._VERSION = "1.1.0"
+
+local lua51 = rawget(_G,'setfenv')
+
+utils.lua51 = lua51
+if not lua51 then -- Lua 5.2 compatibility
+    unpack = table.unpack
+    loadstring = load
+end
 
 utils.dir_separator = _G.package.config:sub(1,1)
 
@@ -33,6 +41,7 @@ end
 -- @param fmt The format (see string.format)
 -- @param ... Extra arguments for format
 function utils.printf(fmt,...)
+    utils.assert_string(1,fmt)
     utils.fprintf(stdout,fmt,...)
 end
 
@@ -196,10 +205,23 @@ function utils.splitv (s,re)
     return unpack(utils.split(s,re))
 end
 
-local lua52 = table.pack ~= nil
+--- convert an array of values to strings.
+-- @param t a list-like table
+-- @param temp buffer to use, otherwise allocate
+-- @param tostr custom tostring function, called with (value,index).
+-- Otherwise use `tostring`
+-- @return the converted buffer
+function utils.array_tostring (t,temp,tostr)
+    temp, tostr = temp or {}, tostr or tostring
+    for i = 1,#t do
+        temp[i] = tostr(t[i],i)
+    end
+    return temp
+end
+
 local lua51_load = load
 
-if not lua52 then -- define Lua 5.2 style load()
+if utils.lua51 then -- define Lua 5.2 style load()
     function utils.load(str,src,mode,env)
         local chunk,err
         if type(str) == 'string' then
@@ -230,9 +252,11 @@ else
             debug.upvaluejoin(f, up, function() return name end, 1) -- use unique upvalue
             debug.setupvalue(f, up, t)
         end
+        if f ~= 0 then return f end
     end
 
     function getfenv(f)
+        local f = f or 0
         f = (type(f) == 'function' and f or debug.getinfo(f + 1, 'f').func)
         local name, val
         local up = 0
@@ -252,14 +276,14 @@ end
 -- @return actual return code
 function utils.execute (cmd)
     local res1,res2,res2 = os.execute(cmd)
-    if not lua52 then
+    if lua51 then
         return res1==0,res1
     else
         return res1,res2
     end
 end
 
-if not lua52 then
+if lua51 then
     function table.pack (...)
         local n = select('#',...)
         return {n=n; ...}
@@ -468,7 +492,7 @@ end
 -- @usage assert_arg(n,val,'string',path.isdir,'not a directory')
 function utils.assert_arg (n,val,tp,verify,msg,lev)
     if type(val) ~= tp then
-        error(("argument %d expected a '%s', got a '%s'"):format(n,tp,type(val)),2)
+        error(("argument %d expected a '%s', got a '%s'"):format(n,tp,type(val)),lev or 2)
     end
     if verify and not verify(val) then
         error(("argument %d: '%s' %s"):format(n,val,msg),lev or 2)
@@ -480,7 +504,7 @@ end
 -- @param val a value that must be a string
 -- @raise val must be a string
 function utils.assert_string (n,val)
-    utils.assert_arg(n,val,'string',nil,nil,nil,3)
+    utils.assert_arg(n,val,'string',nil,nil,3)
 end
 
 local err_mode = 'default'
@@ -493,7 +517,13 @@ local err_mode = 'default'
 -- @param mode - either 'default', 'quit'  or 'error'
 -- @see utils.raise
 function utils.on_error (mode)
-    err_mode = mode
+    if ({['default'] = 1, ['quit'] = 2, ['error'] = 3})[mode] then
+      err_mode = mode
+    else
+      -- fail loudly
+      if err_mode == 'default' then err_mode = 'error' end
+      utils.raise("Bad argument expected string; 'default', 'quit', or 'error'. Got '"..tostring(mode).."'")
+    end
 end
 
 --- used by Penlight functions to return errors.  Its global behaviour is controlled

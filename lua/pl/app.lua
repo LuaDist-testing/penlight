@@ -75,6 +75,27 @@ function app.platform()
     end
 end
 
+--- return the full command-line used to invoke this script
+-- any extra flags occupy slots, so that 'lua -lpl' gives us {[-2]='lua',[-1]='-lpl')
+-- @return command-line
+-- @return name of Lua program used
+function app.lua ()
+    local args = _G.arg or error "not in a main program"
+    local imin = 0
+    for i in pairs(args) do
+        if i < imin then imin = i end
+    end
+    local cmd, append = {}, table.insert
+    for i = imin,-1 do
+        local a = args[i]
+        if a:match '%s' then
+            a = '"'..a..'"'
+        end
+        append(cmd,a)
+    end
+    return table.concat(cmd,' '),args[imin]
+end
+
 --- parse command-line arguments into flags and parameters.
 -- Understands GNU-style command-line flags; short (-f) and long (--flag).
 -- These may be given a value with either '=' or ':' (-k:2,--alpha=3.2,-n2);
@@ -110,8 +131,8 @@ function app.parse_args (args,flags_with_values)
                 flags[v] = args[i+1]
                 i = i + 1
             else
-                -- a value can be indicated with = or :
-                local var,val =  utils.splitv (v,'[=:]')
+                -- a value can also be indicated with =
+                local var,val =  utils.splitv (v,'=')
                 var = var or v
                 val = val or true
                 if not is_long then

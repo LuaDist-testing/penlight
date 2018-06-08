@@ -11,7 +11,7 @@
 --    ports = 1002,1003,1004
 --
 --    -- readconfig.lua
---    require 'pl'
+--    local config = require 'config'
 --    local t = config.read 'test.config'
 --    print(pretty.write(t))
 --
@@ -26,10 +26,7 @@
 --      read_timeout = 10
 --    }
 --
--- See the Guide for further @{06-data.md.Reading_Configuration_Files|discussion}
---
--- Dependencies: none
--- @module pl.config
+-- @module config
 
 local type,tonumber,ipairs,io, table = _G.type,_G.tonumber,_G.ipairs,_G.io,_G.table
 
@@ -71,16 +68,19 @@ function config.lines(file)
     return function()
         local l = f:read()
         while l do
-            -- does the line end with '\'?
-            local i = l:find '\\%s*$'
-            if i then -- if so,
-                line = line..l:sub(1,i-1)
-            elseif line == '' then
-                return l
-            else
-                l = line..l
-                line = ''
-                return l
+            -- only for non-blank lines that don't begin with either ';' or '#'
+            if l:match '%S' and not l:match '^%s*[;#]' then
+                -- does the line end with '\'?
+                local i = l:find '\\%s*$'
+                if i then -- if so,
+                    line = line..l:sub(1,i-1)
+                elseif line == '' then
+                    return l
+                else
+                    l = line..l
+                    line = ''
+                    return l
+                end
             end
             l = f:read()
         end
@@ -101,12 +101,37 @@ end
 -- @return a table containing items, or nil
 -- @return error message (same as @{config.lines}
 function config.read(file,cnfg)
-    local f,openf,err
+    local f,openf,err,auto
+
+    local iter,err = config.lines(file)
+    if not iter then return nil,err end
+    local line = iter()
     cnfg = cnfg or {}
+    if cnfg.smart then
+        auto = true
+        if line:match '^[^=]+=' then
+            cnfg.keysep = '='
+        elseif line:match '^[^:]+:' then
+            cnfg.keysep = ':'
+            cnfg.list_delim = ':'
+        elseif line:match '^%S+%s+' then
+            cnfg.keysep = ' '
+            -- more than two columns assume that it's a space-delimited list
+            -- cf /etc/fstab with /etc/ssh/ssh_config
+            if line:match '^%S+%s+%S+%s+%S+' then
+                cnfg.list_delim = ' '
+            end
+            cnfg.variabilize = false
+        end
+    end
+
+
     local function check_cnfg (var,def)
         local val = cnfg[var]
         if val == nil then return def else return val end
     end
+
+    local initial_digits = '^[%d%+%-]'
     local t = {}
     local top_t = t
     local variablilize = check_cnfg ('variabilize',true)
@@ -115,6 +140,9 @@ function config.read(file,cnfg)
     local trim_space = check_cnfg('trim_space',true)
     local trim_quotes = check_cnfg('trim_quotes',false)
     local ignore_assign = check_cnfg('ignore_assign',false)
+    local keysep = check_cnfg('keysep','=')
+    local keypat = keysep == ' ' and '%s+' or '%s*'..keysep..'%s*'
+    if list_delim == ' ' then list_delim = '%s+' end
 
     local function process_name(key)
         if variablilize then
@@ -129,32 +157,33 @@ function config.read(file,cnfg)
             for i,v in ipairs(value) do
                 value[i] = process_value(v)
             end
-        elseif convert_numbers and value:find('^[%d%+%-]') then
+        elseif convert_numbers and value:find(initial_digits) then
             local val = tonumber(value)
+            if not val and value:match ' kB$' then
+                value = value:gsub(' kB','')
+                val = tonumber(value)
+            end
             if val then value = val end
         end
         if type(value) == 'string' then
            if trim_space then value = strip(value) end
+           if not trim_quotes and auto and value:match '^"' then
+                trim_quotes = true
+            end
            if trim_quotes then value = strip_quotes(value) end
         end
         return value
     end
 
-    local iter,err = config.lines(file)
-    if not iter then return nil,err end
-    for line in iter do
-        -- strips comments
-        local ci = line:find('%s*[#;]')
-        if ci then line = line:sub(1,ci-1) end
-        -- and ignore blank lines
-        if  line:find('^%s*$') then
-        elseif line:find('^%[') then -- section!
+    while line do
+        if line:find('^%[') then -- section!
             local section = process_name(line:match('%[([^%]]+)%]'))
             t = top_t
             t[section] = {}
             t = t[section]
         else
-            local i1,i2 = line:find('%s*=%s*')
+            line = line:gsub('^%s*','')
+            local i1,i2 = line:find(keypat)
             if i1 and not ignore_assign then -- key,value assignment
                 local key = process_name(line:sub(1,i1-1))
                 local value = process_value(line:sub(i2+1))
@@ -163,8 +192,10 @@ function config.read(file,cnfg)
                 t[#t+1] = process_value(line)
             end
         end
+        line = iter()
     end
     return top_t
 end
 
 return config
+

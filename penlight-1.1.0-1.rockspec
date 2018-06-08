@@ -1,17 +1,17 @@
 -- This file was automatically generated for the LuaDist project.
 
 package = "penlight"
-version = "1.0.0-1"
+version = "1.1.0-1"
 
 -- LuaDist source
 source = {
-  tag = "1.0.0-1",
+  tag = "1.1.0-1",
   url = "git://github.com/LuaDist-testing/penlight.git"
 }
 -- Original source
 -- source = {
---   dir = "penlight-1.0.0",
---   url = "http://stevedonovan.github.com/files/penlight-1.0.0-core.zip",
+--   dir = "penlight-1.1.0",
+--   url = "http://stevedonovan.github.com/files/penlight-1.1.0-core.zip",
 -- }
 
 description = {
@@ -19,7 +19,6 @@ description = {
   homepage = "http://stevedonovan.github.com/Penlight",
   license = "MIT/X11",
   maintainer = "steve.j.donovan@gmail.com",
-  homepage = "http://stevedonovan.github.com/Penlight/api/index.html",
   detailed = [[
 Penlight is a set of pure Lua libraries for making it easier to work with common tasks like
 iterating over directories, reading configuration files and the like. Provides functional operations
@@ -69,6 +68,6 @@ build = {
     ["pl.OrderedMap"] = "lua/pl/OrderedMap.lua",
     ["pl.Set"] = "lua/pl/Set.lua",
     ["pl.xml"] = "lua/pl/xml.lua",
-    ["pl.platf.luajava"] = "lua/pl/platf/luajava.lua"
+    ["pl.import_into"] = "lua/pl/import_into.lua",
   },
 }

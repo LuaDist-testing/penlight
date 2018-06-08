@@ -181,6 +181,7 @@ function lapp.process_options_string(str,args)
     end
 
     local function set_result(ps,parm,val)
+        parm = type(parm) == "string" and parm:gsub("%W", "_") or parm -- so foo-bar becomes foo_bar in Lua
         if not ps.varargs then
             results[parm] = val
         else
@@ -203,9 +204,9 @@ function lapp.process_options_string(str,args)
         end
 
         -- flags: either '-<short>', '-<short>,--<long>' or '--<long>'
-        if check '-$v{short}, --$v{long} $' or check '-$v{short} $' or check '--$X{long} $' then
+        if check '-$v{short}, --$o{long} $' or check '-$v{short} $' or check '--$o{long} $' then
             if res.long then
-                optparm = res.long:gsub('%A','_') -- so foo-bar becomes foo_bar in Lua
+                optparm = res.long:gsub('[^%w%-]','_')  -- I'm not sure the $o pattern will let anything else through?
                 if res.short then aliases[res.short] = optparm  end
             else
                 optparm = res.short
@@ -223,11 +224,17 @@ function lapp.process_options_string(str,args)
         if res.rest then
             line = res.rest
             res = {}
-            -- do we have ([<type>] [default <val>])?
+            local optional
+            -- do we have ([optional] [<type>] [default <val>])?
             if match('$({def} $',line,res) or match('$({def}',line,res) then
                 local typespec = strip(res.def)
                 local ftype, rest = typespec:match('^(%S+)(.*)$')
                 rest = strip(rest)
+                if ftype == 'optional' then
+                    ftype, rest = rest:match('^(%S+)(.*)$')
+                    rest = strip(rest)
+                    optional = true
+                end
                 local default
                 if ftype == 'default' then
                     default = true
@@ -246,7 +253,7 @@ function lapp.process_options_string(str,args)
                         -- 'enum' type is a string which must belong to
                         -- one of several distinct values
                         local enums = ftype
-                        enump = '|' .. enums .. '|'
+                        local enump = '|' .. enums .. '|'
                         vtype = 'string'
                         constraint = function(s)
                             lapp.assert(enump:match('|'..s..'|'),
@@ -270,7 +277,7 @@ function lapp.process_options_string(str,args)
             local ps = {
                 type = vtype,
                 defval = defval,
-                required = defval == nil,
+                required = defval == nil and not optional,
                 comment = res.rest or optparm,
                 constraint = constraint,
                 varargs = varargs
