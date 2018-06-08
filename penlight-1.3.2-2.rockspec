@@ -1,17 +1,17 @@
 -- This file was automatically generated for the LuaDist project.
 
 package = "penlight"
-version = "1.3.1-1"
+version = "1.3.2-2"
 
 -- LuaDist source
 source = {
-  tag = "1.3.1-1",
+  tag = "1.3.2-2",
   url = "git://github.com/LuaDist-testing/penlight.git"
 }
 -- Original source
 -- source = {
---   tag = "1.3.1",
---   url = "git://github.com/stevedonovan/Penlight.git",
+--   url = "http://stevedonovan.github.io/files/penlight-1.3.2-core.zip",
+--   dir = "penlight-1.3.2"
 -- }
 
 description = {
@@ -68,6 +68,7 @@ build = {
     ["pl.OrderedMap"] = "lua/pl/OrderedMap.lua",
     ["pl.Set"] = "lua/pl/Set.lua",
     ["pl.xml"] = "lua/pl/xml.lua",
+    ["pl.url"] = "lua/pl/url.lua",
     ["pl.import_into"] = "lua/pl/import_into.lua",
     ["pl.types"] = "lua/pl/types.lua",
   },
